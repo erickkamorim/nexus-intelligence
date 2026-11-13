@@ -1,8 +1,8 @@
 # 📡 NEXUS Intelligence | Inteligência Econômica do Brasil
 
-<!-- IMAGEM: <p align="center">
+<p align="center">
   <img src="docs/dashboard.png" width="100%">
-</p> -->
+</p>
 
 <p align="center">
 
@@ -82,11 +82,29 @@ O projeto cobre todas as etapas de um fluxo de dados:
 
 # 💡 Principais Insights
 
-> Período analisado: janeiro de 2023 a novembro de 2026.
+> Período analisado: janeiro de 2023 a novembro de 2026, com dados atualizados até 13/11/2026.
 
-- Entre 2024 e 2026 o Copom alterou a Selic meta **15 vezes**.
-- A taxa passou por um **ciclo de alta** que levou a Selic ao pico de **15,00% ao ano** em junho de 2025.
-- A partir de março de 2026 começou um **ciclo de cortes** de 0,25 p.p. por reunião, levando a taxa a **13,75%** em setembro de 2026.
+### 🏛️ Juros
+
+- O Copom alterou a Selic meta **19 vezes** no período, passando por **três ciclos completos**.
+- **Ciclo de cortes (ago/2023 a mai/2024):** a taxa caiu de 13,75% para 10,50% ao ano.
+- **Ciclo de altas (set/2024 a jun/2025):** sete altas seguidas levaram a Selic a **15,00% ao ano**, o pico do período.
+- **Novo ciclo de cortes (desde mar/2026):** cinco reduções de 0,25 p.p. trouxeram a taxa para **13,75%**, uma queda acumulada de 1,25 p.p.
+- Com o IPCA em 4,63% em 12 meses, o **juro real está em 8,72% ao ano**. Ele chegou a passar de 10% no início de 2026, quando a Selic estava no pico e a inflação desacelerava.
+
+### 🛒 Inflação
+
+- O IPCA acumulou **19,04%** entre janeiro de 2023 e outubro de 2026, com média de **0,38% ao mês**.
+- A maior variação mensal foi em **fevereiro de 2025 (1,31%)**.
+- Houve meses de **deflação**, como **agosto de 2026 (-0,32%)**, a menor taxa do período.
+- O acumulado em 12 meses está em **4,63%** (outubro de 2026).
+
+### 💵 Câmbio
+
+- O dólar oscilou entre a mínima de **R$ 4,7202 (27/07/2023)** e a máxima de **R$ 6,2086 (02/01/2025)**.
+- Depois do pico no início de 2025, a moeda recuou por mais de um ano, até voltar à faixa de R$ 5,00 em meados de 2026.
+- Em novembro de 2026 houve uma **alta de 12,0% em 30 dias**, levando a cotação a **R$ 5,6518**.
+- A volatilidade anualizada no período foi de **12,0%**.
 
 ---
 
@@ -188,9 +206,6 @@ A restrição `UNIQUE` impede que o mesmo indicador tenha dois valores na mesma 
 
 Cada execução é registrada na tabela `execucoes` com horário, status, quantidade de registros novos e atualizados e a mensagem de erro, se houver.
 
-<!-- IMAGEM: <p align="center">
-<img src="docs/pgadmin.png" width="90%">
-</p> -->
 
 ---
 
@@ -238,9 +253,6 @@ A API em FastAPI expõe os dados para o dashboard. As consultas ficam em arquivo
 
 A documentação interativa fica disponível em `http://localhost:8000/docs`.
 
-<!-- IMAGEM: <p align="center">
-<img src="docs/api.png" width="90%">
-</p> -->
 
 ---
 
@@ -252,41 +264,41 @@ O dashboard foi desenvolvido do zero em HTML, CSS e JavaScript, com gráficos em
 
 Um cartão de destaque mostra a Selic atual e um **resumo da conjuntura escrito automaticamente** a partir dos dados: última decisão do Copom, ciclo atual, inflação, juro real e variação do dólar.
 
-<!-- IMAGEM: <p align="center">
-<img src="docs/dashboard.png" width="90%">
-</p> -->
+<p align="center">
+<img src="docs/visao-geral.png" width="90%">
+</p>
 
 ### 🏛️ Juros
 
 Selic, IPCA 12 meses e juro real no mesmo gráfico, com **cada decisão do Copom marcada na linha** (verde para corte, vermelho para alta) e uma linha do tempo agrupada por ciclo.
 
-<!-- IMAGEM: <p align="center">
+<p align="center">
 <img src="docs/juros.png" width="90%">
-</p> -->
+</p>
 
 ### 🛒 Inflação
 
 IPCA mês a mês, com o mês mais recente em destaque, linha da média do período e estatísticas de acumulado, média, maior e menor taxa.
 
-<!-- IMAGEM: <p align="center">
+<p align="center">
 <img src="docs/inflacao.png" width="90%">
-</p> -->
+</p>
 
 ### 💵 Câmbio
 
 Cotação diária do dólar com média móvel de 21 dias úteis, mínima, máxima, variação e volatilidade anualizada no período.
 
-<!-- IMAGEM: <p align="center">
+<p align="center">
 <img src="docs/cambio.png" width="90%">
-</p> -->
+</p>
 
 ### ✅ Qualidade dos Dados
 
 Cobertura de cada série, dias desde a última atualização e histórico das cargas com status de sucesso ou falha.
 
-<!-- IMAGEM: <p align="center">
+<p align="center">
 <img src="docs/qualidade.png" width="90%">
-</p> -->
+</p>
 
 ---
 
