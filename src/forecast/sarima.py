@@ -76,7 +76,12 @@ class BackendStatsmodels:
 
     def __init__(self, maxiter: int = 200, processos: int | None = None):
         self.maxiter = maxiter
-        self.processos = processos if processos is not None else max(1, (os.cpu_count() or 2) - 1)
+        # Cada processo carrega statsmodels/pandas (centenas de MB). Padrão conservador: 2.
+        # Ajustável pela variável de ambiente NEXUS_PROCESSOS (1 = sem paralelismo).
+        if processos is None:
+            processos = int(os.getenv("NEXUS_PROCESSOS", "2"))
+        self.processos = max(1, min(processos, os.cpu_count() or 1))
+        self._executor = None
         self._ultimos_parametros: dict[Especificacao, np.ndarray] = {}
 
     def ajustar(self, z: np.ndarray, espec: Especificacao):
@@ -96,9 +101,17 @@ class BackendStatsmodels:
         tarefas = [(z, e, self.maxiter) for e in grade]
         if self.processos <= 1:
             return [_aic_statsmodels(t) for t in tarefas]
-        from concurrent.futures import ProcessPoolExecutor
-        with ProcessPoolExecutor(max_workers=self.processos) as executor:
-            return list(executor.map(_aic_statsmodels, tarefas))
+        # Um único conjunto de processos, reaproveitado em todas as seleções
+        # (criar e destruir processos a cada seleção custa memória e tempo).
+        if self._executor is None:
+            from concurrent.futures import ProcessPoolExecutor
+            self._executor = ProcessPoolExecutor(max_workers=self.processos)
+        return list(self._executor.map(_aic_statsmodels, tarefas))
+
+    def encerrar(self) -> None:
+        if self._executor is not None:
+            self._executor.shutdown()
+            self._executor = None
 
 
 class _AjusteStatsmodels:

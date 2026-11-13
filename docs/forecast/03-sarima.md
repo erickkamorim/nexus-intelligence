@@ -31,7 +31,9 @@ da simulação. Por isso:
 - os parâmetros da origem anterior são o ponto de partida da origem seguinte (mesma
   especificação), o que acelera a convergência; se esse ponto de partida falhar, o ajuste é
   refeito do zero;
-- a seleção de ordem avalia as combinações em paralelo, usando os núcleos disponíveis.
+- a seleção de ordem avalia as combinações em paralelo. Na primeira tentativa, um processo por
+  núcleo esgotou a memória do computador (cada processo carrega statsmodels e pandas); o padrão
+  passou a ser 2 processos, reaproveitados entre as seleções, ajustável por `NEXUS_PROCESSOS`.
 
 Nenhuma dessas mudanças altera o que o modelo enxerga em cada origem.
 

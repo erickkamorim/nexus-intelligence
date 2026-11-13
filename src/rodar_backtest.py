@@ -4,6 +4,10 @@ NEXUS Forecast · Backtest dos modelos de referência, do Focus e do SARIMA/ARIM
 Uso (na raiz do projeto, com DATABASE_URL configurada e a coleta da Fase 1 feita):
     python src/rodar_backtest.py               # completo (SARIMA leva alguns minutos)
     python src/rodar_backtest.py --sem-sarima  # só referências e Focus (rápido)
+    python src/rodar_backtest.py --serie ipca  # só uma das séries
+
+Memória: a seleção de ordem usa 2 processos em paralelo por padrão. Para mudar,
+defina NEXUS_PROCESSOS antes de rodar (1 = sem paralelismo, menor uso de memória).
 
 Mesmas origens e horizontes da Fase 2:
   * IPCA: uma origem logo após cada divulgação com data exata (a partir de jan/2017),
@@ -131,6 +135,7 @@ def rodar_ipca(conn, fonte, args, pasta):
     print(f"IPCA: {len(origens)} origens, modelos {[m.nome for m in modelos]} ...")
     prev = executar(fonte, IPCA, modelos, origens, usar_focus=True, acumulado_12m=True,
                     ao_avancar=Progresso("IPCA"))
+    sarima.backend.encerrar()
     print(f"IPCA concluído em {time.time() - inicio:.0f}s")
 
     metricas = {}
@@ -161,6 +166,7 @@ def rodar_cambio(conn, fonte, args, pasta):
     inicio = time.time()
     print(f"\nCâmbio: {len(origens)} origens, modelos {[m.nome for m in modelos]} ...")
     prev = executar(fonte, CAMBIO, modelos, origens, ao_avancar=Progresso("Câmbio"))
+    arima.backend.encerrar()
     print(f"Câmbio concluído em {time.time() - inicio:.0f}s")
     m = resumo(prev, "passeio_aleatorio", passo=PASSO_CAMBIO)
     m.to_csv(pasta / "cambio_metricas.csv", index=False)
