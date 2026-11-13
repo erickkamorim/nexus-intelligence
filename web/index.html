@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXUS Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060606;
+    --side: #0d0d0d;
+    --card: #121212;
+    --card-2: #1a1a1a;
+    --line: #232323;
+    --text: #f5f5f5;
+    --muted: #8a8a8a;
+    --yellow: #ffd60a;
+    --yellow-soft: rgba(255, 214, 10, .12);
+    --up: #ff6b5a;
+    --down: #3ddc97;
+    --blue: #6b93ff;
+    --radius: 28px;
+    --wide: "Unbounded", "Arial Black", system-ui, sans-serif;
+    --body: "Inter", "Segoe UI", system-ui, sans-serif;
+    --side-w: 248px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 14.5px;
+         line-height: 1.45; -webkit-font-smoothing: antialiased; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8;
+          stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* ---------- Menu lateral ---------- */
+  aside { position: fixed; inset: 0 auto 0 0; width: var(--side-w); background: var(--side);
+          border-right: 1px solid var(--line); padding: 28px 18px; display: flex; flex-direction: column; z-index: 30; }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 30px; }
+  .logo { width: 44px; height: 44px; border-radius: 15px; background: var(--yellow); color: #000;
+          display: grid; place-items: center; flex-shrink: 0; }
+  .logo svg { width: 24px; height: 24px; stroke-width: 2.4; }
+  .brand b { font-family: var(--wide); font-size: 17px; font-weight: 700; letter-spacing: .5px; display: block; line-height: 1.1; }
+  .brand small { color: var(--muted); font-size: 11.5px; letter-spacing: .3px; }
+  .menu-label { color: #5a5a5a; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; padding: 0 12px 10px; }
+  .menu { display: flex; flex-direction: column; gap: 4px; }
+  .menu a { display: flex; align-items: center; gap: 12px; color: var(--muted); text-decoration: none;
+            font-weight: 600; font-size: 14px; padding: 12px 14px; border-radius: 999px; transition: background .25s, color .25s; }
+  .menu a:hover { color: var(--text); background: var(--card-2); }
+  .menu a.on { background: var(--yellow); color: #000; }
+  .side-status { margin-top: auto; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 16px; }
+  .side-status .t { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; }
+  .side-status p { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--down); position: relative; flex-shrink: 0; }
+  .dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; background: inherit; opacity: .35;
+                animation: pulso 2s ease-out infinite; }
+  .dot.falha { background: var(--up); }
+  @keyframes pulso { from { transform: scale(.6); opacity: .5; } to { transform: scale(1.8); opacity: 0; } }
+
+  /* ---------- Área principal ---------- */
+  main { margin-left: var(--side-w); padding: 34px 40px 80px; max-width: calc(1320px + var(--side-w)); }
+  .topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 26px; }
+  .topbar h1 { font-family: var(--wide); font-size: 30px; font-weight: 700; letter-spacing: -.3px; line-height: 1.1; }
+  .topbar p { color: var(--muted); margin-top: 6px; }
+  .seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 5px; gap: 2px; position: relative; }
+  .seg button { position: relative; z-index: 1; background: none; border: 0; color: var(--muted); font: 600 13px var(--body);
+                padding: 9px 17px; border-radius: 999px; cursor: pointer; transition: color .25s; }
+  .seg button:hover { color: var(--text); }
+  .seg button.on { color: #000; }
+  .seg .pill { position: absolute; top: 5px; bottom: 5px; border-radius: 999px; background: var(--yellow);
+               transition: left .35s cubic-bezier(.3,.9,.3,1), width .35s cubic-bezier(.3,.9,.3,1); }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; min-width: 0; }
+  .grid { display: grid; gap: 18px; }
+
+  /* ---------- Destaque ---------- */
+  .overview { grid-template-columns: 1.35fr 1fr 1fr; grid-template-rows: auto auto; }
+  .hero { grid-row: span 2; background: var(--yellow); color: #0b0b0b; border: 0; display: flex; flex-direction: column;
+          position: relative; overflow: hidden; }
+  .hero::before { content: ""; position: absolute; width: 380px; height: 380px; border-radius: 50%; right: -120px; top: -160px;
+                  background: radial-gradient(circle, rgba(255,255,255,.45), rgba(255,255,255,0) 70%); pointer-events: none; }
+  .hero-top { display: flex; justify-content: space-between; align-items: center; position: relative; }
+  .hero-label { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; }
+  .hero-label .ico { background: #0b0b0b; color: var(--yellow); }
+  .hero-tag { background: rgba(0,0,0,.1); padding: 7px 13px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .hero-value { font-family: var(--wide); font-weight: 700; font-size: 76px; letter-spacing: -2.5px; line-height: 1; margin: 26px 0 6px; position: relative; }
+  .hero-value small { font-family: var(--body); font-size: 18px; font-weight: 600; letter-spacing: 0; margin-left: 6px; opacity: .7; }
+  .hero-text { font-size: 15.5px; line-height: 1.55; max-width: 520px; position: relative; margin-top: 10px; }
+  .hero-text b { font-weight: 700; }
+  .hero-chart { margin-top: auto; padding-top: 22px; height: 120px; }
+
+  .ico { width: 38px; height: 38px; border-radius: 13px; background: var(--yellow-soft); color: var(--yellow);
+         display: grid; place-items: center; flex-shrink: 0; }
+  .kpi { display: flex; flex-direction: column; gap: 12px; }
+  .kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .kpi-label { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; font-weight: 600; }
+  .kpi-value { font-family: var(--wide); font-size: 31px; font-weight: 700; letter-spacing: -.8px; line-height: 1; margin-top: 4px; }
+  .kpi-value small { font-family: var(--body); font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
+  .kpi-foot { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); }
+  .spark { height: 46px; margin-top: auto; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; font-weight: 700;
+          font-size: 11.5px; background: var(--card-2); color: var(--muted); white-space: nowrap; }
+  .chip svg { width: 13px; height: 13px; stroke-width: 2.4; }
+  .chip.up { color: var(--up); background: rgba(255,107,90,.1); }
+  .chip.down { color: var(--down); background: rgba(61,220,151,.1); }
+
+  /* ---------- Seções ---------- */
+  section { padding-top: 46px; }
+  .sec-title { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .sec-title h2 { font-family: var(--wide); font-size: 21px; font-weight: 700; }
+  .sec-title p { color: var(--muted); font-size: 13px; }
+  .two { grid-template-columns: 1fr 340px; }
+  .card h3 { font-family: var(--wide); font-size: 14.5px; font-weight: 600; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .legend i { width: 16px; height: 3px; border-radius: 3px; display: inline-block; }
+  .legend i.dash { background: repeating-linear-gradient(90deg, #f5f5f5 0 4px, transparent 4px 7px) !important; }
+  .legend i.mk { width: 9px; height: 9px; border-radius: 50%; border: 2px solid #000; box-shadow: 0 0 0 1px #666; }
+
+  /* ---------- Gráficos ---------- */
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; width: 100%; overflow: visible; }
+  .axis { fill: #6d6d6d; font: 11px var(--body); }
+  .grid-line { stroke: var(--line); stroke-dasharray: 2 6; }
+  .end-label rect { rx: 8; }
+  .end-label text { font: 700 11px var(--body); }
+  .anim .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: desenha 1.4s cubic-bezier(.4,.1,.2,1) forwards; }
+  .anim .fade { opacity: 0; animation: aparece .8s ease forwards .5s; }
+  .anim .bar { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); animation: cresce .7s cubic-bezier(.3,1.3,.5,1) forwards; }
+  .anim .pop { transform-box: fill-box; transform-origin: center; transform: scale(0); animation: pop .4s cubic-bezier(.3,1.6,.5,1) forwards; }
+  @keyframes desenha { to { stroke-dashoffset: 0; } }
+  @keyframes aparece { to { opacity: 1; } }
+  @keyframes cresce { to { transform: scaleY(1); } }
+  @keyframes pop { to { transform: scale(1); } }
+  .tip { position: absolute; pointer-events: none; background: rgba(0,0,0,.92); border: 1px solid #333; border-radius: 16px;
+         padding: 11px 13px; font-size: 12px; white-space: nowrap; transform: translate(-50%, calc(-100% - 16px));
+         opacity: 0; transition: opacity .15s; z-index: 5; backdrop-filter: blur(6px); }
+  .tip b { display: block; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  .tip div { display: flex; align-items: center; gap: 8px; line-height: 1.7; }
+  .tip i { width: 8px; height: 8px; border-radius: 50%; }
+  .tip .note { margin-top: 6px; padding-top: 6px; border-top: 1px solid #2a2a2a; color: var(--yellow); font-weight: 600; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+  .stat { background: var(--card-2); border-radius: 18px; padding: 14px 16px; }
+  .stat span { display: block; color: var(--muted); font-size: 12px; }
+  .stat b { font-family: var(--wide); font-size: 17px; font-weight: 600; display: block; margin-top: 3px; }
+
+  /* Linha do tempo do Copom */
+  .timeline { position: relative; max-height: 430px; overflow-y: auto; padding: 4px 4px 4px 0; }
+  .timeline::-webkit-scrollbar { width: 6px; } .timeline::-webkit-scrollbar-thumb { background: #333; border-radius: 6px; }
+  .tl-item { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+             padding: 12px 0 12px 28px; }
+  .tl-item::before { content: ""; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--line); }
+  .tl-item:first-child::before { top: 50%; } .tl-item:last-child::before { bottom: 50%; }
+  .tl-item .tl-dot { position: absolute; left: 0; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%;
+                     border: 3px solid var(--card); background: var(--down); box-shadow: 0 0 0 1px var(--down); }
+  .tl-item.alta .tl-dot { background: var(--up); box-shadow: 0 0 0 1px var(--up); }
+  .tl-item .big { font-family: var(--wide); font-size: 16px; font-weight: 600; }
+  .tl-item .when { color: var(--muted); font-size: 12px; }
+  .tl-cycle { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #5f5f5f; padding: 10px 0 4px 28px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 0 10px 10px; }
+  td { padding: 13px 10px; border-top: 1px solid var(--line); }
+  td:first-child, th:first-child { padding-left: 0; }
+  .ok { color: var(--down); } .bad { color: var(--up); } .muted { color: var(--muted); }
+  .bar-cov { height: 6px; background: var(--card-2); border-radius: 6px; overflow: hidden; width: 100px; }
+  .bar-cov i { display: block; height: 100%; background: var(--yellow); border-radius: 6px; }
+  .runs { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+  .run { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--card-2);
+         border-radius: 16px; padding: 12px 14px; font-size: 13px; }
+  .run .when { color: var(--muted); font-size: 12px; }
+
+  .erro { border-color: rgba(255,107,90,.4); display: none; margin-bottom: 18px; }
+  code { background: var(--card-2); padding: 2px 7px; border-radius: 7px; font-size: 12px; }
+
+  /* Entrada dos cartões */
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 1180px) {
+    .overview { grid-template-columns: 1fr 1fr; }
+    .hero { grid-column: span 2; grid-row: auto; }
+    .two { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 860px) {
+    aside { inset: auto 50% 18px auto; transform: translateX(50%); width: auto; height: auto; padding: 7px;
+            flex-direction: row; border: 1px solid var(--line); border-radius: 999px;
+            background: rgba(13,13,13,.9); backdrop-filter: blur(14px); box-shadow: 0 18px 50px rgba(0,0,0,.6); }
+    .brand, .menu-label, .side-status, .menu a span { display: none; }
+    .menu { flex-direction: row; }
+    .menu a { padding: 12px 15px; }
+    main { margin-left: 0; padding: 22px 16px 120px; }
+    .overview { grid-template-columns: 1fr; }
+    .hero { grid-column: auto; }
+    .hero-value { font-size: 56px; }
+    .topbar h1 { font-size: 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Ícones desenhados -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+    <symbol id="i-percent" viewBox="0 0 24 24"><path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="20.5" r="1"/><circle cx="17" cy="20.5" r="1"/></symbol>
+    <symbol id="i-dollar" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 6.5c-.8-1.4-2.7-2.5-5-2.5-2.8 0-5 1.6-5 3.7 0 5 10 2.6 10 8 0 2.1-2.2 3.8-5 3.8-2.4 0-4.4-1.1-5.2-2.7"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14"/><path d="m5 7-3 7a3.5 3.5 0 0 0 6 0Z"/><path d="m19 7-3 7a3.5 3.5 0 0 0 6 0Z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+    <symbol id="i-cycle" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M7 7l10 10M17 9v8H9"/></symbol>
+    <symbol id="i-flat" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  </defs>
+</svg>
+
+<aside>
+  <div class="brand">
+    <div class="logo"><svg class="i"><use href="#i-pulse"/></svg></div>
+    <div><b>NEXUS</b><small>Intelligence</small></div>
+  </div>
+  <div class="menu-label">Painel</div>
+  <nav class="menu" id="menu">
+    <a href="#visao" class="on"><svg class="i"><use href="#i-grid"/></svg><span>Visão geral</span></a>
+    <a href="#juros"><svg class="i"><use href="#i-percent"/></svg><span>Juros</span></a>
+    <a href="#inflacao"><svg class="i"><use href="#i-cart"/></svg><span>Inflação</span></a>
+    <a href="#cambio"><svg class="i"><use href="#i-dollar"/></svg><span>Câmbio</span></a>
+    <a href="#dados"><svg class="i"><use href="#i-db"/></svg><span>Qualidade</span></a>
+  </nav>
+  <div class="side-status">
+    <div class="t"><span class="dot" id="st-dot"></span><span id="st-titulo">Conectando…</span></div>
+    <p id="st-txt">Fonte: Banco Central do Brasil (SGS)</p>
+  </div>
+</aside>
+
+<main>
+  <div class="card erro" id="erro">
+    <h3>Não foi possível carregar os dados</h3>
+    <p class="muted" id="erro-msg" style="margin-top:6px"></p>
+  </div>
+
+  <div id="visao">
+    <div class="topbar">
+      <div>
+        <h1>Visão geral</h1>
+        <p id="sub-data">Indicadores econômicos oficiais do Brasil</p>
+      </div>
+      <div class="seg" id="periodo">
+        <span class="pill"></span>
+        <button data-m="6">6M</button>
+        <button data-m="12">1A</button>
+        <button data-m="24">2A</button>
+        <button data-m="0" class="on">Tudo</button>
+      </div>
+    </div>
+
+    <div class="grid overview">
+      <div class="card hero reveal">
+        <div class="hero-top">
+          <div class="hero-label"><span class="ico"><svg class="i"><use href="#i-percent"/></svg></span>Selic meta</div>
+          <span class="hero-tag" id="h-tag">—</span>
+        </div>
+        <div class="hero-value" id="h-valor">—</div>
+        <p class="hero-text" id="h-texto">&nbsp;</p>
+        <div class="hero-chart" id="h-chart"></div>
+      </div>
+
+      <div class="card kpi reveal">
+        <div class="kpi-top"><div class="kpi-label"><span class="ico"><svg class="i"><use href="#i-cart"/></svg></span>IPCA 12 meses</div><span class="chip" id="k-ipca-chip">—</span></div>
+        <div class="kpi-value" id="k-ipca">—</div>
+        <div class="spark" id="s-ipca"></div>
+        <div class="kpi-foot" id="k-ipca-foot">&nbsp;</div>
+      </div>
+      <div class="card kpi reveal">
+        <div class="kpi-top"><div class="kpi-label"><span class="ico"><svg class="i"><use href="#i-dollar"/></svg></span>Dólar (venda)</div><span class="chip" id="k-dolar-chip">—</span></div>
+        <div class="kpi-value" id="k-dolar">—</div>
+        <div class="spark" id="s-dolar"></div>
+        <div class="kpi-foot" id="k-dolar-foot">&nbsp;</div>
+      </div>
+      <div class="card kpi reveal">
+        <div class="kpi-top"><div class="kpi-label"><span class="ico"><svg class="i"><use href="#i-scale"/></svg></span>Juro real</div><span class="chip">ex-post</span></div>
+        <div class="kpi-value" id="k-real">—</div>
+        <div class="spark" id="s-real"></div>
+        <div class="kpi-foot"><span>Selic descontada do IPCA 12m</span></div>
+      </div>
+      <div class="card kpi reveal">
+        <div class="kpi-top"><div class="kpi-label"><span class="ico"><svg class="i"><use href="#i-cycle"/></svg></span>Ciclo do Copom</div><span class="chip" id="k-ciclo-chip">—</span></div>
+        <div class="kpi-value" id="k-ciclo">—</div>
+        <div class="spark" id="s-ciclo"></div>
+        <div class="kpi-foot" id="k-ciclo-foot">&nbsp;</div>
+      </div>
+    </div>
+  </div>
+
+  <section id="juros">
+    <div class="sec-title"><span class="ico"><svg class="i"><use href="#i-percent"/></svg></span>
+      <div><h2>Juros</h2><p>Política monetária e inflação lado a lado</p></div></div>
+    <div class="grid two">
+      <div class="card reveal">
+        <div class="card-head">
+          <div><h3>Selic meta × IPCA 12 meses</h3><p class="hint">A distância entre as linhas é o juro real. Os pontos marcam cada decisão do Copom.</p></div>
+          <div class="legend">
+            <span><i style="background:var(--yellow)"></i>Selic</span>
+            <span><i style="background:#f5f5f5"></i>IPCA 12m</span>
+            <span><i style="background:var(--blue)"></i>Juro real</span>
+            <span><i class="mk" style="background:var(--down)"></i>Corte</span>
+            <span><i class="mk" style="background:var(--up)"></i>Alta</span>
+          </div>
+        </div>
+        <div class="chart" id="c-juros"></div>
+      </div>
+      <div class="card reveal">
+        <h3>Decisões do Copom</h3>
+        <p class="hint" style="margin-bottom:12px">Mudanças da Selic meta no período</p>
+        <div class="timeline" id="copom"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="inflacao">
+    <div class="sec-title"><span class="ico"><svg class="i"><use href="#i-cart"/></svg></span>
+      <div><h2>Inflação</h2><p>IPCA mês a mês</p></div></div>
+    <div class="card reveal">
+      <div class="card-head">
+        <div><h3>IPCA mensal</h3><p class="hint">Variação dos preços em cada mês. O mês mais recente aparece em destaque.</p></div>
+        <div class="legend"><span><i style="background:var(--yellow)"></i>Variação no mês</span><span><i class="dash"></i>Média do período</span></div>
+      </div>
+      <div class="chart" id="c-ipca"></div>
+      <div class="stats" id="ipca-stats"></div>
+    </div>
+  </section>
+
+  <section id="cambio">
+    <div class="sec-title"><span class="ico"><svg class="i"><use href="#i-dollar"/></svg></span>
+      <div><h2>Câmbio</h2><p>Dólar americano, cotação de venda</p></div></div>
+    <div class="card reveal">
+      <div class="card-head">
+        <div><h3>Dólar comercial (R$)</h3><p class="hint">Cotação diária e média móvel de 21 dias úteis (cerca de um mês)</p></div>
+        <div class="legend"><span><i style="background:var(--yellow)"></i>Cotação</span><span><i class="dash"></i>Média móvel 21d</span></div>
+      </div>
+      <div class="chart" id="c-dolar"></div>
+      <div class="stats" id="dolar-stats"></div>
+    </div>
+  </section>
+
+  <section id="dados">
+    <div class="sec-title"><span class="ico"><svg class="i"><use href="#i-db"/></svg></span>
+      <div><h2>Qualidade dos dados</h2><p>Cobertura das séries e auditoria das cargas</p></div></div>
+    <div class="grid two">
+      <div class="card reveal">
+        <h3>Cobertura</h3>
+        <p class="hint" style="margin-bottom:16px">Fonte: API SGS do Banco Central</p>
+        <table><thead><tr><th>Indicador</th><th>Registros</th><th>Período</th><th>Atualização</th></tr></thead>
+          <tbody id="cobertura"></tbody></table>
+      </div>
+      <div class="card reveal">
+        <h3>Últimas cargas</h3>
+        <p class="hint" style="margin-bottom:16px">Tabela de auditoria <code>execucoes</code></p>
+        <div class="runs" id="execucoes"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ================= Utilidades ================= */
+const $ = id => document.getElementById(id);
+const fmt = (v, c = 2) => v == null || isNaN(v) ? "—" :
+  Number(v).toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
+const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const MESES_LONGOS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const parse = s => { const [a, m, d] = s.slice(0, 10).split("-").map(Number); return new Date(a, m - 1, d); };
+const dataBR = d => d.toLocaleDateString("pt-BR");
+const mesAno = d => `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+const NOMES = { selic_meta: "Selic meta", ipca_mensal: "IPCA mensal", dolar_venda: "Dólar (venda)" };
+const COR = { y: "#ffd60a", w: "#f5f5f5", b: "#6b93ff", up: "#ff6b5a", down: "#3ddc97" };
+const DIA = 864e5;
+const reduzMovimento = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let ANIMAR = !reduzMovimento;
+
+/* Números contando ao carregar */
+function contar(el, valor, casas, antes = "", depois = "") {
+  if (valor == null) { el.innerHTML = "—"; return; }
+  if (!ANIMAR) { el.innerHTML = antes + fmt(valor, casas) + depois; return; }
+  const ini = performance.now(), dur = 1100;
+  const passo = agora => {
+    const p = Math.min(1, (agora - ini) / dur), e = 1 - Math.pow(1 - p, 4);
+    el.innerHTML = antes + fmt(valor * e, casas) + depois;
+    if (p < 1) requestAnimationFrame(passo);
+  };
+  requestAnimationFrame(passo);
+}
+
+/* ================= Gráfico SVG ================= */
+function niceTicks(min, max, n = 5) {
+  if (min === max) { min -= 1; max += 1; }
+  const raw = (max - min) / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw);
+  const lo = Math.floor(min / step) * step, hi = Math.ceil(max / step) * step, t = [];
+  for (let v = lo; v <= hi + step / 2; v += step) t.push(+v.toFixed(10));
+  return t;
+}
+
+let gid = 0;
+function chart(el, series, o = {}) {
+  const { height = 300, yFmt = v => fmt(v, 1), spark = false, zero = false, refLine = null, markers = [] } = o;
+  el.innerHTML = "";
+  el.classList.toggle("anim", ANIMAR);
+  const W = el.clientWidth || 600, H = height;
+  const temRotulo = series.some(s => s.endLabel);
+  const m = spark ? { t: 6, r: 4, b: 6, l: 4 } : { t: 14, r: temRotulo ? 74 : 14, b: 30, l: 50 };
+  const pts = series.flatMap(s => s.data);
+  if (!pts.length) { el.innerHTML = '<p class="muted">Sem dados no período.</p>'; return; }
+  const x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0]));
+  let y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
+  if (zero) { y0 = Math.min(0, y0); y1 = Math.max(0, y1); }
+  const ticks = spark ? null : niceTicks(y0, y1);
+  if (ticks) { y0 = ticks[0]; y1 = ticks[ticks.length - 1]; }
+  if (y0 === y1) { y0 -= 1; y1 += 1; }
+  if (spark) { const f = (y1 - y0) * .12; y0 -= f; y1 += f; }
+  const barras = series.find(s => s.type === "bar");
+  const pad = barras ? (x1 - x0) / Math.max(barras.data.length - 1, 1) / 2 : 0;
+  const X = t => m.l + ((t - (x0 - pad)) / ((x1 + pad) - (x0 - pad) || 1)) * (W - m.l - m.r);
+  const Y = v => m.t + (1 - (v - y0) / (y1 - y0)) * (H - m.t - m.b);
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  let h = "";
+
+  if (!spark) {
+    ticks.forEach(t => {
+      h += `<line class="grid-line" x1="${m.l}" x2="${W - m.r}" y1="${Y(t)}" y2="${Y(t)}"/>`;
+      h += `<text class="axis" x="${m.l - 12}" y="${Y(t) + 4}" text-anchor="end">${yFmt(t)}</text>`;
+    });
+    const meses = Math.max(1, Math.round((x1 - x0) / (30.4 * DIA)));
+    const passo = Math.max(1, Math.ceil(meses / Math.max(2, Math.floor((W - m.l - m.r) / 72))));
+    const d = new Date(x0); d.setDate(1); if (d.getTime() < x0 - pad) d.setMonth(d.getMonth() + 1);
+    for (let i = 0; d.getTime() <= x1 + pad; d.setMonth(d.getMonth() + 1), i++)
+      if (i % passo === 0) h += `<text class="axis" x="${X(d.getTime())}" y="${H - 8}" text-anchor="middle">${mesAno(d)}</text>`;
+  }
+
+  series.forEach((s, si) => {
+    if (!s.data.length) return;
+    if (s.type === "bar") {
+      const bw = Math.max(3, ((W - m.l - m.r) / s.data.length) * 0.58);
+      s.data.forEach(([t, v], i) => {
+        const ultimo = i === s.data.length - 1;
+        const y = Math.min(Y(v), Y(0)), alt = Math.max(2, Math.abs(Y(v) - Y(0)));
+        const cor = v < 0 ? "#4a4a4a" : s.color;
+        h += `<rect class="bar" style="animation-delay:${i * 18}ms" x="${X(t) - bw / 2}" y="${y}" width="${bw}" height="${alt}"
+              rx="${Math.min(7, bw / 2)}" fill="${cor}" opacity="${ultimo ? 1 : .42}"/>`;
+      });
+      return;
+    }
+    let d = "";
+    s.data.forEach(([t, v], i) => {
+      if (i === 0) d += `M${X(t)},${Y(v)}`;
+      else if (s.type === "step") d += `H${X(t)}V${Y(v)}`;
+      else d += `L${X(t)},${Y(v)}`;
+    });
+    if (s.fill) {
+      const id = "g" + (++gid);
+      h += `<defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${s.fill}" stop-opacity="${spark ? .35 : .28}"/>
+            <stop offset="1" stop-color="${s.fill}" stop-opacity="0"/></linearGradient></defs>`;
+      h += `<path class="fade" d="${d}V${H - m.b}H${X(s.data[0][0])}Z" fill="url(#${id})"/>`;
+    }
+    const traco = s.dash ? `class="fade" stroke-dasharray="${s.dash}"` : `class="draw" pathLength="1"`;
+    h += `<path ${traco} d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width || (spark ? 2.2 : 2.6)}"
+          stroke-linejoin="round" stroke-linecap="round"/>`;
+  });
+
+  if (refLine != null && !spark) {
+    h += `<line class="fade" x1="${m.l}" x2="${W - m.r}" y1="${Y(refLine.v)}" y2="${Y(refLine.v)}" stroke="#f5f5f5" stroke-width="1.4" stroke-dasharray="4 4"/>`;
+    const lw = refLine.label.length * 6.4 + 16;
+    h += `<g class="fade"><rect x="${m.l + 6}" y="${Y(refLine.v) - 11}" width="${lw}" height="22" rx="8" fill="#f5f5f5"/>
+          <text x="${m.l + 6 + lw / 2}" y="${Y(refLine.v) + 4}" text-anchor="middle" style="font:700 11px var(--body);fill:#000">${refLine.label}</text></g>`;
+  }
+
+  // Marcadores (decisões do Copom)
+  markers.forEach((mk, i) => {
+    if (mk.t < x0 || mk.t > x1) return;
+    h += `<circle class="pop" style="animation-delay:${900 + i * 45}ms" cx="${X(mk.t)}" cy="${Y(mk.v)}" r="5.5" fill="${mk.cor}" stroke="#121212" stroke-width="2.5"/>`;
+  });
+
+  // Valores na ponta das linhas (afastados para não se sobreporem)
+  if (!spark) {
+    const rotulos = series.filter(s => s.endLabel && s.data.length).map(s => {
+      const [t, v] = s.data[s.data.length - 1];
+      return { x: X(t), y: Y(v), yl: Y(v), txt: s.endLabel(v), cor: s.color, escuro: s.color === COR.y || s.color === COR.w };
+    }).sort((a, b) => a.yl - b.yl);
+    for (let i = 1; i < rotulos.length; i++) if (rotulos[i].yl - rotulos[i - 1].yl < 26) rotulos[i].yl = rotulos[i - 1].yl + 26;
+    rotulos.forEach(r => {
+      const w = r.txt.length * 6.6 + 16;
+      h += `<g class="end-label fade"><circle cx="${r.x}" cy="${r.y}" r="4" fill="${r.cor}"/>
+            <rect x="${W - m.r + 10}" y="${r.yl - 11}" width="${w}" height="22" fill="${r.cor}" rx="8"/>
+            <text x="${W - m.r + 10 + w / 2}" y="${r.yl + 4}" text-anchor="middle" fill="${r.escuro ? "#000" : "#fff"}">${r.txt}</text></g>`;
+    });
+  }
+
+  svg.innerHTML = h;
+  el.appendChild(svg);
+  if (spark) return;
+
+  /* Interação: linha-guia + tooltip */
+  const guia = document.createElementNS(ns, "line");
+  guia.setAttribute("stroke", "#4a4a4a"); guia.setAttribute("stroke-dasharray", "3 3");
+  guia.setAttribute("y1", m.t); guia.setAttribute("y2", H - m.b); guia.style.opacity = 0; svg.appendChild(guia);
+  const pontos = series.map(s => {
+    const c = document.createElementNS(ns, "circle");
+    c.setAttribute("r", 5); c.setAttribute("fill", s.color); c.setAttribute("stroke", "#000"); c.setAttribute("stroke-width", 2.5);
+    c.style.opacity = 0; svg.appendChild(c); return c;
+  });
+  const tip = document.createElement("div"); tip.className = "tip"; el.appendChild(tip);
+  const proximo = (arr, t) => {
+    let lo = 0, hi = arr.length - 1;
+    while (lo < hi) { const md = (lo + hi) >> 1; arr[md][0] < t ? lo = md + 1 : hi = md; }
+    if (lo > 0 && Math.abs(arr[lo - 1][0] - t) < Math.abs(arr[lo][0] - t)) lo--;
+    return arr[lo];
+  };
+  svg.addEventListener("mousemove", e => {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (W / r.width);
+    const t = (x0 - pad) + ((px - m.l) / (W - m.l - m.r)) * ((x1 + pad) - (x0 - pad));
+    const ref = proximo(series[0].data, t), xr = X(ref[0]);
+    guia.setAttribute("x1", xr); guia.setAttribute("x2", xr); guia.style.opacity = 1;
+    let linhas = "";
+    series.forEach((s, i) => {
+      if (!s.data.length || s.noTip) { pontos[i].style.opacity = 0; return; }
+      const p = proximo(s.data, ref[0]);
+      if (Math.abs(p[0] - ref[0]) > 40 * DIA) { pontos[i].style.opacity = 0; return; }
+      pontos[i].setAttribute("cx", X(p[0])); pontos[i].setAttribute("cy", Y(p[1]));
+      pontos[i].style.opacity = s.type === "bar" ? 0 : 1;
+      linhas += `<div><i style="background:${s.color}"></i>${s.name}: <strong>${(s.tipFmt || yFmt)(p[1])}</strong></div>`;
+    });
+    const mk = markers.find(k => Math.abs(k.t - ref[0]) <= 2 * DIA);
+    const nota = mk ? `<div class="note">${mk.label}</div>` : "";
+    tip.innerHTML = `<b>${series[0].monthly ? MESES_LONGOS[new Date(ref[0]).getMonth()] + " de " + new Date(ref[0]).getFullYear() : dataBR(new Date(ref[0]))}</b>${linhas}${nota}`;
+    tip.style.left = Math.min(Math.max(xr / W * r.width, 110), r.width - 110) + "px";
+    tip.style.top = Math.max(60, Y(ref[1]) / H * r.height) + "px";
+    tip.style.opacity = 1;
+  });
+  svg.addEventListener("mouseleave", () => { tip.style.opacity = 0; guia.style.opacity = 0; pontos.forEach(p => p.style.opacity = 0); });
+}
+
+/* ================= Dados ================= */
+let DADOS = null, MESES_FILTRO = 0;
+const serie = (lista, idx = 1) => (lista || []).filter(r => r[idx] != null).map(r => [parse(r[0]).getTime(), Number(r[idx])]);
+function recorte(arr) {
+  if (!MESES_FILTRO || !arr.length) return arr;
+  const ini = new Date(FIM); ini.setMonth(ini.getMonth() - MESES_FILTRO);
+  return arr.filter(p => p[0] >= ini.getTime());
+}
+const ultimos = (arr, meses) => { const fim = arr.length ? arr[arr.length - 1][0] : 0; return arr.filter(p => p[0] >= fim - meses * 30.4 * DIA); };
+let FIM = Date.now();
+
+function chip(id, delta, casas, sufixo, inverso = false) {
+  const el = $(id);
+  if (delta == null || isNaN(delta)) { el.textContent = "—"; return; }
+  const sobe = delta > 1e-6, desce = delta < -1e-6;
+  el.className = "chip" + (sobe ? (inverso ? " down" : " up") : desce ? (inverso ? " up" : " down") : "");
+  el.innerHTML = `<svg class="i"><use href="#${sobe ? "i-up" : desce ? "i-down" : "i-flat"}"/></svg>${sobe ? "+" : ""}${fmt(delta, casas)}${sufixo}`;
+}
+
+/* Ciclo atual do Copom: decisões seguidas na mesma direção */
+function cicloAtual() {
+  const c = DADOS.copom;
+  if (!c.length) return null;
+  const sinal = Math.sign(c[0].variacao);
+  let n = 0, total = 0;
+  for (const d of c) { if (Math.sign(d.variacao) !== sinal) break; n++; total += d.variacao; }
+  const inicio = c[n - 1];
+  return { sinal, n, total, desde: inicio.anterior, dataInicio: parse(inicio.data) };
+}
+
+function textoResumo(r, ciclo) {
+  const partes = [];
+  if (ciclo && r.copom) {
+    const acao = ciclo.sinal < 0 ? "cortou" : "elevou";
+    const ord = ciclo.n > 1 ? `, ${ciclo.n === 2 ? "a segunda" : `a ${ciclo.n}ª`} ${ciclo.sinal < 0 ? "redução" : "alta"} seguida` : "";
+    partes.push(`O Copom <b>${acao} a Selic em ${fmt(Math.abs(r.copom.variacao))} p.p.</b> em ${dataBR(parse(r.copom.data))}${ord}.`);
+    if (ciclo.n > 1) partes.push(`Desde ${MESES_LONGOS[ciclo.dataInicio.getMonth()]} de ${ciclo.dataInicio.getFullYear()}, a taxa ${ciclo.sinal < 0 ? "caiu" : "subiu"} de ${fmt(ciclo.desde)}% para ${fmt(r.selic.valor)}%.`);
+  }
+  if (r.ipca && r.ipca.acum_12m != null && r.juro_real != null)
+    partes.push(`Com a inflação em <b>${fmt(r.ipca.acum_12m)}% em 12 meses</b>, o juro real está em <b>${fmt(r.juro_real)}% ao ano</b>.`);
+  if (r.dolar && r.dolar.valor_30d) {
+    const v = (r.dolar.valor / r.dolar.valor_30d - 1) * 100;
+    partes.push(`O dólar está em R$ ${fmt(r.dolar.valor, 2)}, ${Math.abs(v) < 0.1 ? "estável" : v > 0 ? `alta de ${fmt(v, 1)}%` : `queda de ${fmt(Math.abs(v), 1)}%`} em 30 dias.`);
+  }
+  return partes.join(" ");
+}
+
+function renderVisao() {
+  const r = DADOS.resumo, s = DADOS.series, ciclo = cicloAtual();
+  if (r.selic) {
+    contar($("h-valor"), r.selic.valor, 2, "", "<small>% ao ano</small>");
+    $("h-tag").textContent = r.copom ? `Copom · ${dataBR(parse(r.copom.data))}` : "Banco Central";
+    $("h-texto").innerHTML = textoResumo(r, ciclo);
+    $("sub-data").textContent = `Dados oficiais do Banco Central atualizados até ${dataBR(parse(r.selic.data))}`;
+  }
+  chart($("h-chart"), [{ name: "Selic", color: "#0b0b0b", type: "step", width: 2.6, fill: "#000", data: serie(s.selic) }], { height: 120, spark: true });
+
+  if (r.ipca) {
+    contar($("k-ipca"), r.ipca.acum_12m, 2, "", "<small>%</small>");
+    chip("k-ipca-chip", r.ipca.acum_12m_anterior == null ? null : r.ipca.acum_12m - r.ipca.acum_12m_anterior, 2, " p.p.");
+    $("k-ipca-foot").innerHTML = `<span>${fmt(r.ipca.mensal)}% no mês</span><span>${mesAno(parse(r.ipca.data))}</span>`;
+  }
+  if (r.dolar) {
+    contar($("k-dolar"), r.dolar.valor, 4, '<small style="margin:0 5px 0 0">R$</small>');
+    chip("k-dolar-chip", r.dolar.valor_30d ? (r.dolar.valor / r.dolar.valor_30d - 1) * 100 : null, 1, "%");
+    $("k-dolar-foot").innerHTML = `<span>Variação em 30 dias</span><span>${dataBR(parse(r.dolar.data))}</span>`;
+  }
+  contar($("k-real"), r.juro_real, 2, "", "<small>% a.a.</small>");
+  if (ciclo) {
+    contar($("k-ciclo"), ciclo.total, 2, ciclo.total > 0 ? "+" : "", "<small>p.p.</small>");
+    $("k-ciclo-chip").className = "chip " + (ciclo.sinal < 0 ? "down" : "up");
+    $("k-ciclo-chip").textContent = `${ciclo.n} ${ciclo.sinal < 0 ? (ciclo.n > 1 ? "cortes" : "corte") : (ciclo.n > 1 ? "altas" : "alta")}`;
+    $("k-ciclo-foot").innerHTML = `<span>${ciclo.sinal < 0 ? "Ciclo de cortes" : "Ciclo de altas"} desde</span><span>${mesAno(ciclo.dataInicio)}</span>`;
+  }
+  const amarelo = COR.y;
+  chart($("s-ipca"), [{ name: "s", color: amarelo, fill: amarelo, data: ultimos(serie(s.ipca, 2), 12) }], { height: 46, spark: true });
+  chart($("s-dolar"), [{ name: "s", color: amarelo, fill: amarelo, data: ultimos(serie(s.dolar), 12) }], { height: 46, spark: true });
+  chart($("s-real"), [{ name: "s", color: amarelo, fill: amarelo, data: ultimos(serie(s.juro_real), 12) }], { height: 46, spark: true });
+  chart($("s-ciclo"), [{ name: "s", color: amarelo, type: "step", fill: amarelo, data: ultimos(serie(s.selic), 18) }], { height: 46, spark: true });
+}
+
+function renderGraficos() {
+  const s = DADOS.series, pct = v => fmt(v, 2) + "%";
+  const selic = serie(s.selic);
+  FIM = selic.length ? selic[selic.length - 1][0] : Date.now();
+
+  // Juros
+  const marcadores = DADOS.copom.map(c => ({
+    t: parse(c.data).getTime(), v: Number(c.selic), cor: c.variacao > 0 ? COR.up : COR.down,
+    label: `Copom: ${c.variacao > 0 ? "alta" : "corte"} de ${fmt(Math.abs(c.variacao))} p.p.`,
+  }));
+  chart($("c-juros"), [
+    { name: "Selic meta", color: COR.y, type: "step", data: recorte(selic), tipFmt: pct, endLabel: v => fmt(v) + "%" },
+    { name: "IPCA 12m", color: COR.w, data: recorte(serie(s.ipca, 2)), tipFmt: pct, endLabel: v => fmt(v) + "%" },
+    { name: "Juro real", color: COR.b, data: recorte(serie(s.juro_real)), tipFmt: pct, endLabel: v => fmt(v) + "%" },
+  ], { height: 340, yFmt: v => fmt(v, v % 1 ? 1 : 0) + "%", markers: marcadores });
+
+  // Linha do tempo do Copom, agrupada por ciclo
+  const ini = recorte(selic)[0]?.[0] ?? 0;
+  const dec = DADOS.copom.filter(c => parse(c.data).getTime() >= ini);
+  let html = "", sinalAnt = null;
+  dec.forEach(c => {
+    const sinal = Math.sign(c.variacao);
+    if (sinal !== sinalAnt) { html += `<div class="tl-cycle">${sinal < 0 ? "Ciclo de cortes" : "Ciclo de altas"}</div>`; sinalAnt = sinal; }
+    const alta = sinal > 0;
+    html += `<div class="tl-item ${alta ? "alta" : ""}"><span class="tl-dot"></span>
+      <div><div class="big">${fmt(c.selic)}%</div><div class="when">${parse(c.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })} · era ${fmt(c.anterior)}%</div></div>
+      <span class="chip ${alta ? "up" : "down"}"><svg class="i"><use href="#${alta ? "i-up" : "i-down"}"/></svg>${alta ? "+" : ""}${fmt(c.variacao)} p.p.</span></div>`;
+  });
+  $("copom").innerHTML = html || '<p class="muted">Nenhuma mudança no período.</p>';
+
+  // Inflação
+  const ipca = recorte(serie(s.ipca, 1));
+  const vals = ipca.map(p => p[1]);
+  const media = vals.length ? vals.reduce((a, v) => a + v, 0) / vals.length : null;
+  chart($("c-ipca"), [{ name: "IPCA no mês", color: COR.y, type: "bar", data: ipca, monthly: true, tipFmt: pct }],
+    { height: 300, yFmt: v => fmt(v, 1) + "%", zero: true, refLine: media == null ? null : { v: media, label: `média ${fmt(media)}%` } });
+  if (vals.length) {
+    const acum = (vals.reduce((a, v) => a * (1 + v / 100), 1) - 1) * 100;
+    const maior = ipca.reduce((a, p) => p[1] > a[1] ? p : a), menor = ipca.reduce((a, p) => p[1] < a[1] ? p : a);
+    $("ipca-stats").innerHTML = `
+      <div class="stat"><span>Acumulado no período</span><b>${fmt(acum)}%</b></div>
+      <div class="stat"><span>Média mensal</span><b>${fmt(media)}%</b></div>
+      <div class="stat"><span>Maior alta · ${mesAno(new Date(maior[0]))}</span><b>${fmt(maior[1])}%</b></div>
+      <div class="stat"><span>Menor taxa · ${mesAno(new Date(menor[0]))}</span><b>${fmt(menor[1])}%</b></div>`;
+  }
+
+  // Câmbio + média móvel de 21 dias úteis
+  const dolarTodo = serie(s.dolar);
+  const mm = dolarTodo.map((p, i) => i < 20 ? null : [p[0], dolarTodo.slice(i - 20, i + 1).reduce((a, q) => a + q[1], 0) / 21]).filter(Boolean);
+  const dolar = recorte(dolarTodo);
+  chart($("c-dolar"), [
+    { name: "Dólar", color: COR.y, fill: COR.y, data: dolar, tipFmt: v => "R$ " + fmt(v, 4), endLabel: v => "R$ " + fmt(v, 2) },
+    { name: "Média 21d", color: "#cfcfcf", dash: "5 5", width: 1.6, data: recorte(mm), tipFmt: v => "R$ " + fmt(v, 4) },
+  ], { height: 320, yFmt: v => "R$ " + fmt(v, 2) });
+  if (dolar.length) {
+    const v = dolar.map(p => p[1]);
+    const min = dolar.reduce((a, p) => p[1] < a[1] ? p : a), max = dolar.reduce((a, p) => p[1] > a[1] ? p : a);
+    const varPer = (v[v.length - 1] / v[0] - 1) * 100;
+    const ret = v.slice(1).map((x, i) => Math.log(x / v[i]));
+    const mr = ret.reduce((a, x) => a + x, 0) / (ret.length || 1);
+    const vol = Math.sqrt(ret.reduce((a, x) => a + (x - mr) ** 2, 0) / Math.max(1, ret.length - 1)) * Math.sqrt(252) * 100;
+    $("dolar-stats").innerHTML = `
+      <div class="stat"><span>Mínima · ${dataBR(new Date(min[0]))}</span><b>R$ ${fmt(min[1], 4)}</b></div>
+      <div class="stat"><span>Máxima · ${dataBR(new Date(max[0]))}</span><b>R$ ${fmt(max[1], 4)}</b></div>
+      <div class="stat"><span>Variação no período</span><b class="${varPer > 0 ? "bad" : "ok"}">${varPer > 0 ? "+" : ""}${fmt(varPer, 1)}%</b></div>
+      <div class="stat"><span>Volatilidade anualizada</span><b>${fmt(vol, 1)}%</b></div>`;
+  }
+}
+
+function renderQualidade() {
+  const q = DADOS.qualidade;
+  const maxReg = Math.max(...(q.cobertura || []).map(c => c.registros), 1);
+  $("cobertura").innerHTML = (q.cobertura || []).map(c => {
+    const limite = c.indicador === "ipca_mensal" ? 45 : 5, atrasado = c.dias_sem_atualizar > limite;
+    return `<tr><td>${NOMES[c.indicador] || c.indicador}</td>
+      <td><div style="display:flex;align-items:center;gap:10px">${c.registros.toLocaleString("pt-BR")}
+        <span class="bar-cov"><i style="width:${c.registros / maxReg * 100}%"></i></span></div></td>
+      <td class="muted">${dataBR(parse(c.primeira_data))} a ${dataBR(parse(c.ultima_data))}</td>
+      <td class="${atrasado ? "bad" : "ok"}">${c.dias_sem_atualizar === 0 ? "Hoje" : c.dias_sem_atualizar + " dia(s) atrás"}</td></tr>`;
+  }).join("");
+  $("execucoes").innerHTML = (q.execucoes || []).map(e => {
+    const ok = e.status === "sucesso", w = new Date(e.iniciado_em);
+    return `<div class="run"><div><div>${w.toLocaleDateString("pt-BR")} às ${w.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
+      <div class="when">${ok ? `${e.registros_inseridos ?? 0} novos · ${e.registros_atualizados ?? 0} atualizados` : (e.mensagem || "Falha na carga")}</div></div>
+      <span class="chip ${ok ? "down" : "up"}">${ok ? "Sucesso" : e.status === "falha" ? "Falha" : "Em andamento"}</span></div>`;
+  }).join("") || '<p class="muted">Nenhuma carga registrada.</p>';
+
+  const ex = DADOS.resumo.execucao;
+  if (ex) {
+    const w = new Date(ex.finalizado_em || ex.iniciado_em), ok = ex.status === "sucesso";
+    $("st-dot").className = "dot" + (ok ? "" : " falha");
+    $("st-titulo").textContent = ok ? "Dados atualizados" : "Última carga falhou";
+    $("st-txt").textContent = `Carga em ${w.toLocaleDateString("pt-BR")} às ${w.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} · Fonte: Banco Central (SGS)`;
+  }
+}
+
+async function carregar() {
+  try {
+    const nomes = ["resumo", "series", "copom", "qualidade"];
+    const resp = await Promise.all(nomes.map(n => fetch(`api/${n}`).then(async r => {
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || `Erro ${r.status} em /api/${n}`);
+      return r.json();
+    })));
+    DADOS = Object.fromEntries(nomes.map((n, i) => [n, resp[i]]));
+    renderGraficos(); renderVisao(); renderQualidade();
+  } catch (e) {
+    $("erro").style.display = "block";
+    $("erro-msg").innerHTML = `${e.message}<br>Confira se o PostgreSQL está ligado e se a API foi iniciada com <code>python src/api.py</code>.`;
+    $("st-dot").className = "dot falha"; $("st-titulo").textContent = "Sem conexão";
+  }
+}
+
+/* ================= Interações ================= */
+const seg = $("periodo"), pill = seg.querySelector(".pill");
+function moverPill() {
+  const b = seg.querySelector("button.on");
+  pill.style.left = b.offsetLeft + "px"; pill.style.width = b.offsetWidth + "px";
+}
+seg.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || !DADOS) return;
+  seg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  moverPill(); MESES_FILTRO = Number(b.dataset.m); ANIMAR = !reduzMovimento; renderGraficos();
+});
+moverPill();
+document.fonts && document.fonts.ready.then(moverPill);
+
+let tResize;
+window.addEventListener("resize", () => {
+  clearTimeout(tResize);
+  tResize = setTimeout(() => { if (DADOS) { ANIMAR = false; renderGraficos(); renderVisao(); ANIMAR = !reduzMovimento; } moverPill(); }, 150);
+});
+
+// Cartões aparecem ao rolar
+const obs = new IntersectionObserver(es => es.forEach((en, i) => {
+  if (en.isIntersecting) { setTimeout(() => en.target.classList.add("in"), i * 70); obs.unobserve(en.target); }
+}), { threshold: .08 });
+document.querySelectorAll(".reveal").forEach(el => obs.observe(el));
+
+// Menu lateral acompanha a seção visível
+const links = [...document.querySelectorAll("#menu a")];
+const secoes = links.map(a => document.querySelector(a.getAttribute("href")));
+window.addEventListener("scroll", () => {
+  let atual = 0;
+  secoes.forEach((s, i) => { if (s.getBoundingClientRect().top < innerHeight * .35) atual = i; });
+  if (innerHeight + scrollY >= document.body.scrollHeight - 4) atual = secoes.length - 1;
+  links.forEach((a, i) => a.classList.toggle("on", i === atual));
+}, { passive: true });
+
+carregar();
+</script>
+</body>
+</html>
