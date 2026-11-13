@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from coleta import focus, ibge, ptax, sgs  # noqa: E402
 from coleta.modelos import BRASILIA, Observacao  # noqa: E402
-from coleta.validacao import graves, validar_focus, validar_serie  # noqa: E402
+from coleta.validacao import consolidar_duplicadas, graves, validar_focus, validar_serie  # noqa: E402
 
 HOJE = date(2026, 11, 13)
 
@@ -201,3 +201,19 @@ def test_cotacao_em_fim_de_semana_e_grave():
 def test_origem_e_data_incoerentes_sao_graves():
     obs = [Observacao("ipca_mensal", date(2024, 1, 1), 0.4, None, "ibge_calendario", "t")]
     assert any(p.regra == "disponibilidade_incoerente" for p in graves(validar_serie(obs, "mensal", (-3, 5), HOJE)))
+
+
+def test_duplicidade_identica_e_consolidada_com_a_divulgacao_mais_antiga():
+    """Caso real: a PTAX devolveu 23/04/2025 duas vezes com o mesmo valor."""
+    cedo = Observacao("ptax_venda", date(2025, 4, 23), 5.71, datetime(2025, 4, 23, 13, 5, tzinfo=BRASILIA), "ptax_datahora_cotacao", "t")
+    tarde = Observacao("ptax_venda", date(2025, 4, 23), 5.71, datetime(2025, 4, 23, 13, 9, tzinfo=BRASILIA), "ptax_datahora_cotacao", "t")
+    outro = Observacao("ptax_venda", date(2025, 4, 24), 5.68, datetime(2025, 4, 24, 13, 4, tzinfo=BRASILIA), "ptax_datahora_cotacao", "t")
+    assert not graves(validar_serie([tarde, cedo, outro], "diaria", (1, 15), HOJE))
+    assert consolidar_duplicadas([tarde, cedo, outro]) == [cedo, outro]
+
+
+def test_consolidar_recusa_valores_diferentes():
+    a = Observacao("ptax_venda", date(2025, 4, 23), 5.71, None, "nao_verificavel", "t")
+    b = Observacao("ptax_venda", date(2025, 4, 23), 5.80, None, "nao_verificavel", "t")
+    with pytest.raises(ValueError):
+        consolidar_duplicadas([a, b])

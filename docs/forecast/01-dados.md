@@ -104,6 +104,10 @@ origem incoerente com a data de divulgação, mediana do Focus fora do intervalo
 **Avisos** são registrados no log, sem bloquear: valores fora da faixa plausível,
 duplicidades idênticas e lacunas de até alguns dias no câmbio (feriados).
 
+Duplicidades idênticas são consolidadas antes da gravação, mantendo a divulgação mais
+antiga (a primeira prova de publicação). Caso real encontrado na primeira coleta: a PTAX
+devolveu a cotação de 23/04/2025 duas vezes, com o mesmo valor.
+
 ## Testes
 
 - `tests/sql/test_versoes.sql`: versionamento, revisões e ausência de vazamento no banco.
@@ -114,5 +118,7 @@ duplicidades idênticas e lacunas de até alguns dias no câmbio (feriados).
 
 1. ~~Conferir as amostras reais das APIs~~ (feito em 13/11/2026: PTAX, SGS e Focus no formato
    esperado; leitor do IBGE refeito para o formato real).
-2. Registrar a cobertura do calendário do IBGE: primeiro mês com data exata.
-3. Rodar a coleta completa e registrar quantos meses de IPCA ficaram em cada origem.
+2. ~~Cobertura do calendário do IBGE~~: 119 meses com data exata, de 12/2016 a 10/2026,
+   primeira divulgação registrada em 11/01/2017. Nenhum backtest começa antes dessa data.
+3. ~~Origem das datas do IPCA~~ (coleta de 13/11/2026): 119 meses `ibge_calendario` e
+   155 meses `ibge_limite_superior` (01/2004 a 11/2016), total de 274 meses.

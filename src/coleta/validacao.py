@@ -116,5 +116,23 @@ def validar_focus(regs: list[ExpectativaFocus]) -> list[Problema]:
     return p
 
 
+def consolidar_duplicadas(obs: list[Observacao]) -> list[Observacao]:
+    """Junta registros repetidos com o MESMO valor (aviso da validação), mantendo a
+    divulgação mais antiga: é a primeira prova de que aquele valor estava publicado.
+    Repetições com valores diferentes são problema grave e nunca chegam aqui."""
+    unicos: dict[tuple, Observacao] = {}
+    for o in obs:
+        chave = (o.serie, o.data_referencia)
+        atual = unicos.get(chave)
+        if atual is None:
+            unicos[chave] = o
+            continue
+        if atual.valor != o.valor:
+            raise ValueError(f"Valores diferentes para {chave}: use a validação antes de consolidar")
+        if o.disponivel_em is not None and (atual.disponivel_em is None or o.disponivel_em < atual.disponivel_em):
+            unicos[chave] = o
+    return sorted(unicos.values(), key=lambda o: (o.serie, o.data_referencia))
+
+
 def graves(problemas: list[Problema]) -> list[Problema]:
     return [x for x in problemas if x.grave]

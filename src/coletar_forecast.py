@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from coleta import focus, ibge, ptax, sgs  # noqa: E402
 from coleta.http import obter_json  # noqa: E402
 from coleta.modelos import BRASILIA  # noqa: E402
-from coleta.validacao import graves, validar_focus, validar_serie  # noqa: E402
+from coleta.validacao import consolidar_duplicadas, graves, validar_focus, validar_serie  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/nexus_db")
@@ -114,7 +114,7 @@ def coletar(args) -> int:
             cotacoes.extend(ptax.coletar(args.inicio_ptax, hoje))
             problemas = validar_serie(cotacoes, "diaria", (1.0, 15.0), hoje)
             relatar("ptax", problemas)
-            novas = None if graves(problemas) else arm.gravar_serie(conn, execucao, cotacoes)
+            novas = None if graves(problemas) else arm.gravar_serie(conn, execucao, consolidar_duplicadas(cotacoes))
             return len(cotacoes), novas, problemas
         etapa("ptax", etapa_ptax)
         calendario = ptax.dias_uteis(cotacoes)
@@ -133,7 +133,7 @@ def coletar(args) -> int:
             obs = sgs.coletar_ipca(args.inicio_ipca, hoje, divulgacoes)
             problemas = validar_serie(obs, "mensal", (-3.0, 5.0), hoje)
             relatar("ipca", problemas)
-            novas = None if graves(problemas) else arm.gravar_serie(conn, execucao, obs)
+            novas = None if graves(problemas) else arm.gravar_serie(conn, execucao, consolidar_duplicadas(obs))
             por_origem = Counter(o.origem_disponibilidade for o in obs)
             log.info("IPCA, origem da data de divulgação: %s", dict(por_origem))
             return len(obs), novas, problemas
