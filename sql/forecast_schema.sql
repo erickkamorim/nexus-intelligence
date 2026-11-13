@@ -265,3 +265,26 @@ CREATE TABLE IF NOT EXISTS backtest_metricas (
     veredito       VARCHAR(40),
     PRIMARY KEY (execucao_id, comparacao, modelo, h)
 );
+
+-- -----------------------------------------------------------------------------
+-- 7. Fase 3: medida (variação ou acumulado 12m) e detalhe do modelo
+--    (ex.: ordem do SARIMA escolhida). Migração idempotente para bancos
+--    criados na Fase 2.
+-- -----------------------------------------------------------------------------
+ALTER TABLE backtest_previsoes ADD COLUMN IF NOT EXISTS medida  VARCHAR(20) NOT NULL DEFAULT 'variacao';
+ALTER TABLE backtest_previsoes ADD COLUMN IF NOT EXISTS detalhe VARCHAR(80);
+ALTER TABLE backtest_metricas  ADD COLUMN IF NOT EXISTS medida  VARCHAR(20) NOT NULL DEFAULT 'variacao';
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'pk_backtest_previsoes_medida') THEN
+        ALTER TABLE backtest_previsoes DROP CONSTRAINT IF EXISTS backtest_previsoes_pkey;
+        ALTER TABLE backtest_previsoes ADD CONSTRAINT pk_backtest_previsoes_medida
+            PRIMARY KEY (execucao_id, medida, modelo, origem, h);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'pk_backtest_metricas_medida') THEN
+        ALTER TABLE backtest_metricas DROP CONSTRAINT IF EXISTS backtest_metricas_pkey;
+        ALTER TABLE backtest_metricas ADD CONSTRAINT pk_backtest_metricas_medida
+            PRIMARY KEY (execucao_id, medida, comparacao, modelo, h);
+    END IF;
+END $$;

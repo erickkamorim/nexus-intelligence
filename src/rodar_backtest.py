@@ -1,22 +1,25 @@
 """
-NEXUS Forecast · Fase 2 · Backtest dos modelos de referência e do Focus.
+NEXUS Forecast · Backtest dos modelos de referência, do Focus e do SARIMA/ARIMA.
 
 Uso (na raiz do projeto, com DATABASE_URL configurada e a coleta da Fase 1 feita):
-    python src/rodar_backtest.py
+    python src/rodar_backtest.py               # completo (SARIMA leva alguns minutos)
+    python src/rodar_backtest.py --sem-sarima  # só referências e Focus (rápido)
 
-O que faz:
-  * IPCA: uma origem logo após cada divulgação do IBGE registrada no calendário
-    (a partir de jan/2017), horizontes de 1 a 6 meses;
-  * Câmbio: 250 origens semanais (a cada 5 dias úteis), horizontes 1, 5, 10 e 21;
-  * compara cada modelo com a referência obrigatória (Diebold-Mariano com
-    correção para sobreposição) e, no IPCA, também com o Boletim Focus;
-  * grava previsões e métricas no banco e em data/backtest/*.csv.
+Mesmas origens e horizontes da Fase 2:
+  * IPCA: uma origem logo após cada divulgação com data exata (a partir de jan/2017),
+    horizontes de 1 a 6 meses; também avalia o acumulado em 12 meses;
+  * Câmbio: 250 origens a cada 5 dias úteis, horizontes 1, 5, 10 e 21.
+Comparações: referência obrigatória (Diebold-Mariano com correção para
+sobreposição) e, no IPCA, também o Boletim Focus. A cobertura dos intervalos
+de 80% e 95% aparece em todas as tabelas.
 """
 
+import argparse
 import json
 import os
 import subprocess
 import sys
+import time
 from datetime import timedelta
 from pathlib import Path
 
@@ -29,6 +32,7 @@ from forecast.backtest import ConfigSerie, executar, origens_semanais  # noqa: E
 from forecast.fontes import FonteBanco  # noqa: E402
 from forecast.metricas import resumo  # noqa: E402
 from forecast.modelos import MODELOS_CAMBIO, MODELOS_IPCA  # noqa: E402
+from forecast.sarima import ModeloSarima, grade_cambio, grade_ipca  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/nexus_db")
@@ -36,6 +40,10 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localho
 IPCA = ConfigSerie("ipca_mensal", "mensal", horizontes=[1, 2, 3, 4, 5, 6], n_erros_intervalo=60, minimo_historico=72)
 CAMBIO = ConfigSerie("ptax_venda", "diaria", horizontes=[1, 5, 10, 21], n_erros_intervalo=500, minimo_historico=300)
 PASSO_CAMBIO = 5
+COLUNAS_PREV = ["medida", "modelo", "origem", "ultimo_conhecido", "h", "alvo", "previsto",
+                "li80", "ls80", "li95", "ls95", "realizado", "detalhe"]
+COLUNAS_MET = ["modelo", "h", "n", "mae", "rmse", "rmse_relativo", "cobertura80", "cobertura95",
+               "n_comum", "dm", "p_valor", "p_melhor", "veredito"]
 
 
 def versao_codigo() -> str | None:
@@ -46,37 +54,43 @@ def versao_codigo() -> str | None:
         return None
 
 
-def gravar(conn, cfg: ConfigSerie, referencia: str, parametros: dict, previsoes: pd.DataFrame,
-           metricas: dict[str, pd.DataFrame]) -> int:
+def _sem_nan(df: pd.DataFrame, colunas: list[str]) -> pd.DataFrame:
+    df = df.reindex(columns=colunas).astype(object)
+    return df.where(df.notna(), None)
+
+
+def gravar(conn, cfg, referencia, parametros, previsoes, metricas: dict[tuple[str, str], pd.DataFrame]) -> int:
     with conn.transaction():
         execucao = conn.execute(
             "INSERT INTO backtest_execucoes (serie, referencia, versao_codigo, parametros) VALUES (%s, %s, %s, %s) RETURNING id",
-            (cfg.serie, referencia, versao_codigo(), json.dumps(parametros))).fetchone()[0]
-        cols = ["modelo", "origem", "ultimo_conhecido", "h", "alvo", "previsto", "li80", "ls80", "li95", "ls95", "realizado"]
-        p = previsoes.reindex(columns=cols).astype(object).where(previsoes.reindex(columns=cols).notna(), None)
-        with conn.cursor().copy(f"COPY backtest_previsoes (execucao_id, {', '.join(cols)}) FROM STDIN") as copia:
-            for linha in p.itertuples(index=False):
+            (cfg.serie, referencia, versao_codigo(), json.dumps(parametros, default=str))).fetchone()[0]
+        with conn.cursor().copy(f"COPY backtest_previsoes (execucao_id, {', '.join(COLUNAS_PREV)}) FROM STDIN") as copia:
+            for linha in _sem_nan(previsoes, COLUNAS_PREV).itertuples(index=False):
                 copia.write_row((execucao, *linha))
-        cols_m = ["modelo", "h", "n", "mae", "rmse", "rmse_relativo", "cobertura80", "cobertura95",
-                  "n_comum", "dm", "p_valor", "p_melhor", "veredito"]
-        for comparacao, m in metricas.items():
-            m = m.reindex(columns=cols_m).astype(object).where(m.reindex(columns=cols_m).notna(), None)
+        for (medida, comparacao), m in metricas.items():
             conn.cursor().executemany(
-                f"INSERT INTO backtest_metricas (execucao_id, comparacao, {', '.join(cols_m)}) "
-                f"VALUES (%s, %s, {', '.join(['%s'] * len(cols_m))})",
-                [(execucao, comparacao, *linha) for linha in m.itertuples(index=False)])
+                f"INSERT INTO backtest_metricas (execucao_id, medida, comparacao, {', '.join(COLUNAS_MET)}) "
+                f"VALUES (%s, %s, %s, {', '.join(['%s'] * len(COLUNAS_MET))})",
+                [(execucao, medida, comparacao, *l) for l in _sem_nan(m, COLUNAS_MET).itertuples(index=False)])
     return execucao
 
 
 def mostrar(titulo: str, m: pd.DataFrame) -> None:
     print(f"\n=== {titulo} ===")
-    colunas = [c for c in ["h", "modelo", "n", "mae", "rmse", "rmse_relativo", "cobertura80", "cobertura95",
+    if m.empty:
+        print("(sem dados)")
+        return
+    colunas = [c for c in ["h", "modelo", "n", "rmse", "rmse_relativo", "cobertura80", "cobertura95",
                            "p_melhor", "veredito"] if c in m]
-    with pd.option_context("display.width", 200, "display.max_columns", 20, "display.float_format", "{:.4f}".format):
+    with pd.option_context("display.width", 220, "display.max_columns", 20, "display.float_format", "{:.4f}".format):
         print(m[colunas].to_string(index=False))
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sem-sarima", action="store_true", help="Roda só as referências e o Focus")
+    args = parser.parse_args()
+
     import psycopg
 
     pasta = RAIZ / "data" / "backtest"
@@ -85,34 +99,54 @@ def main():
         preparar_esquema(conn)
         fonte = FonteBanco(conn)
 
-        # ---------------- IPCA: origens logo após cada divulgação com data exata
+        # ---------------------------------------------------------------- IPCA
+        sarima = ModeloSarima("sarima", grade_ipca(), "nivel", reselecionar_a_cada=12, minimo=72)
+        modelos = MODELOS_IPCA + ([] if args.sem_sarima else [sarima])
         origens = [d + timedelta(minutes=1) for d in fonte.divulgacoes_ipca()]
-        prev = executar(fonte, IPCA, MODELOS_IPCA, origens, usar_focus=True)
-        m_ref = resumo(prev, "ingenuo", passo=1)
-        m_focus = resumo(prev, "focus_mediana", passo=1)
-        gravar(conn, IPCA, "ingenuo",
-               {"origens": len(origens), "horizontes": IPCA.horizontes, "n_erros_intervalo": IPCA.n_erros_intervalo,
-                "primeira_origem": str(min(origens)), "ultima_origem": str(max(origens))},
-               prev, {"ingenuo": m_ref, "focus_mediana": m_focus})
-        prev.to_csv(pasta / "ipca_previsoes.csv", index=False)
-        m_ref.to_csv(pasta / "ipca_metricas_vs_ingenuo.csv", index=False)
-        m_focus.to_csv(pasta / "ipca_metricas_vs_focus.csv", index=False)
-        mostrar("IPCA · comparação com o modelo ingênuo", m_ref)
-        mostrar("IPCA · comparação com o Boletim Focus (mesma origem, mesmo mês-alvo)", m_focus)
+        inicio = time.time()
+        print(f"IPCA: {len(origens)} origens, modelos {[m.nome for m in modelos]} ...")
+        prev = executar(fonte, IPCA, modelos, origens, usar_focus=True, acumulado_12m=True)
+        print(f"IPCA concluído em {time.time() - inicio:.0f}s")
 
-        # ---------------- Câmbio: origens semanais
+        metricas = {}
+        for medida, rotulo in (("variacao", "variação mensal"), ("acumulado_12m", "acumulado em 12 meses")):
+            for ref, nome_ref in (("ingenuo", "modelo ingênuo"), ("focus_mediana", "Boletim Focus")):
+                m = resumo(prev, ref, passo=1, medida=medida)
+                metricas[(medida, ref)] = m
+                m.to_csv(pasta / f"ipca_{medida}_vs_{ref}.csv", index=False)
+                mostrar(f"IPCA · {rotulo} · comparação com o {nome_ref}", m)
+        parametros = {"origens": len(origens), "horizontes": IPCA.horizontes,
+                      "n_erros_intervalo": IPCA.n_erros_intervalo, "primeira_origem": min(origens),
+                      "ultima_origem": max(origens), "selecoes_sarima": sarima.selecoes,
+                      "falhas_sarima": sarima.falhas}
+        gravar(conn, IPCA, "ingenuo", parametros, prev, metricas)
+        prev.to_csv(pasta / "ipca_previsoes.csv", index=False)
+        if sarima.selecoes:
+            print("\nOrdens do SARIMA escolhidas (só com dados de cada origem):")
+            for s in sarima.selecoes:
+                print(f"  {str(s['origem'])[:10]}  {s['especificacao']:<38} AIC {s['aic']:.1f}  ({s['n_obs']} meses)")
+
+        # ---------------------------------------------------------------- Câmbio
+        arima = ModeloSarima("arima_log", grade_cambio(), "log", reselecionar_a_cada=52, minimo=300)
+        modelos = MODELOS_CAMBIO + ([] if args.sem_sarima else [arima])
         calendario = fonte.atual(CAMBIO.serie).index
         origens = origens_semanais(calendario, 250, max(CAMBIO.horizontes), PASSO_CAMBIO)
-        prev = executar(fonte, CAMBIO, MODELOS_CAMBIO, origens)
-        m_rw = resumo(prev, "passeio_aleatorio", passo=PASSO_CAMBIO)
-        gravar(conn, CAMBIO, "passeio_aleatorio",
-               {"origens": len(origens), "passo_dias_uteis": PASSO_CAMBIO, "horizontes": CAMBIO.horizontes,
-                "n_erros_intervalo": CAMBIO.n_erros_intervalo,
-                "primeira_origem": str(min(origens)), "ultima_origem": str(max(origens))},
-               prev, {"passeio_aleatorio": m_rw})
+        inicio = time.time()
+        print(f"\nCâmbio: {len(origens)} origens, modelos {[m.nome for m in modelos]} ...")
+        prev = executar(fonte, CAMBIO, modelos, origens)
+        print(f"Câmbio concluído em {time.time() - inicio:.0f}s")
+        m = resumo(prev, "passeio_aleatorio", passo=PASSO_CAMBIO)
+        m.to_csv(pasta / "cambio_metricas.csv", index=False)
+        mostrar("Câmbio · comparação com o passeio aleatório (referência obrigatória)", m)
+        parametros = {"origens": len(origens), "passo_dias_uteis": PASSO_CAMBIO, "horizontes": CAMBIO.horizontes,
+                      "n_erros_intervalo": CAMBIO.n_erros_intervalo, "primeira_origem": min(origens),
+                      "ultima_origem": max(origens), "selecoes_arima": arima.selecoes, "falhas_arima": arima.falhas}
+        gravar(conn, CAMBIO, "passeio_aleatorio", parametros, prev, {("variacao", "passeio_aleatorio"): m})
         prev.to_csv(pasta / "cambio_previsoes.csv", index=False)
-        m_rw.to_csv(pasta / "cambio_metricas.csv", index=False)
-        mostrar("Câmbio · comparação com o passeio aleatório (referência obrigatória)", m_rw)
+        if arima.selecoes:
+            print("\nOrdens do ARIMA escolhidas:")
+            for s in arima.selecoes:
+                print(f"  {str(s['origem'])[:10]}  {s['especificacao']:<24} AIC {s['aic']:.1f}  ({s['n_obs']} dias)")
 
     print(f"\nResultados gravados no banco (backtest_*) e em {pasta}")
 

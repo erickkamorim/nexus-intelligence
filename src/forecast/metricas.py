@@ -64,8 +64,11 @@ def diebold_mariano(erro_modelo, erro_referencia, h: int, passo: int = 1, perda:
     return resultado
 
 
-def resumo(df: pd.DataFrame, referencia: str, passo: int = 1, alfa: float = 0.05) -> pd.DataFrame:
+def resumo(df: pd.DataFrame, referencia: str, passo: int = 1, alfa: float = 0.05,
+           medida: str = "variacao") -> pd.DataFrame:
     """Uma linha por modelo e horizonte, sempre nas origens comuns ao modelo e à referência."""
+    if "medida" in df:
+        df = df[df["medida"] == medida]
     linhas = []
     for (modelo, h), g in df.groupby(["modelo", "h"]):
         ref = df[(df["modelo"] == referencia) & (df["h"] == h)].set_index("origem")["erro"]
