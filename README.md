@@ -88,7 +88,7 @@ O projeto cobre todas as etapas de um fluxo de dados:
 
 - O Copom alterou a Selic meta **19 vezes** no período, passando por **três ciclos completos**.
 - **Ciclo de cortes (ago/2023 a mai/2024):** a taxa caiu de 13,75% para 10,50% ao ano.
-- **Ciclo de altas (set/2024 a jun/2025):** sete altas seguidas levaram a Selic a **15,00% ao ano**, o pico do período.
+- **Ciclo de altas (set/2024 a jun/2025):** sete altas seguidas levaram a Selic de 10,50% a **15,00% ao ano**, o pico do período. No auge do aperto, o Copom subiu **1 p.p. em três reuniões consecutivas** (dez/2024, jan/2025 e mar/2025).
 - **Novo ciclo de cortes (desde mar/2026):** cinco reduções de 0,25 p.p. trouxeram a taxa para **13,75%**, uma queda acumulada de 1,25 p.p.
 - Com o IPCA em 4,63% em 12 meses, o **juro real está em 8,72% ao ano**. Ele chegou a passar de 10% no início de 2026, quando a Selic estava no pico e a inflação desacelerava.
 
@@ -235,6 +235,12 @@ FROM (
 ) t
 WHERE valor <> valor_anterior;
 ```
+
+Resultado no pgAdmin: as 19 decisões do Copom no período, com a taxa anterior e a variação em pontos percentuais.
+
+<p align="center">
+<img src="docs/pgadmin.png" width="80%">
+</p>
 
 Outras consultas em [`sql/consultas.sql`](sql/consultas.sql): último valor de cada indicador, dólar médio por mês, juro real mês a mês e histórico de cargas.
 
