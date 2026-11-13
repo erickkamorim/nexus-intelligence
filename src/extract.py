@@ -34,6 +34,7 @@ SERIES = {
 
 URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados"
 TENTATIVAS = 3
+CABECALHOS = {"User-Agent": "NEXUS-Intelligence/1.0 (+https://github.com/erickkamorim/nexus-intelligence)", "Accept": "application/json"}
 
 log = logging.getLogger("nexus.extract")
 
@@ -55,7 +56,7 @@ def baixar_serie(codigo: int, inicio: str, fim: str) -> list[dict]:
     params = {"formato": "json", "dataInicial": inicio, "dataFinal": fim}
     for tentativa in range(1, TENTATIVAS + 1):
         try:
-            resp = requests.get(URL.format(codigo=codigo), params=params, timeout=30)
+            resp = requests.get(URL.format(codigo=codigo), params=params, timeout=30, headers=CABECALHOS)
             resp.raise_for_status()
             return resp.json()
         except (requests.RequestException, ValueError) as erro:

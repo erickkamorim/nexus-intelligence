@@ -12,7 +12,12 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
 
+</p>
+
+<p align="center">
+  <a href="https://erickkamorim.github.io/nexus-intelligence/"><b>🔗 Acessar o dashboard online</b></a>
 </p>
 
 > **Plataforma de inteligência econômica que coleta automaticamente indicadores oficiais do Banco Central do Brasil, valida a qualidade dos dados, armazena o histórico em PostgreSQL e apresenta as análises em um dashboard web interativo.**
@@ -59,6 +64,7 @@ O projeto cobre todas as etapas de um fluxo de dados:
 | 🧮 SQL | Indicadores derivados com funções de janela (`LAG`, `SUM OVER`, `DISTINCT ON`) |
 | ⚡ FastAPI | API REST que entrega os dados ao dashboard |
 | 🎨 HTML, CSS e JavaScript | Dashboard web com gráficos SVG feitos sem bibliotecas externas |
+| ⚙️ GitHub Actions | Atualização diária automática e publicação no GitHub Pages |
 
 ---
 
@@ -131,6 +137,8 @@ O projeto cobre todas as etapas de um fluxo de dados:
 ✅ Painel de qualidade dos dados
 
 ✅ Layout responsivo com tema escuro
+
+✅ Dashboard online com atualização diária automática (GitHub Actions + GitHub Pages)
 
 ---
 
@@ -308,6 +316,24 @@ Cobertura de cada série, dias desde a última atualização e histórico das ca
 
 ---
 
+## 🌐 7. Publicação e Atualização Automática
+
+O dashboard fica disponível online pelo **GitHub Pages**:
+
+🔗 **https://erickkamorim.github.io/nexus-intelligence/**
+
+Um workflow do **GitHub Actions** (`.github/workflows/atualizar-dashboard.yml`) roda todo dia útil às 19h (horário de Brasília) e executa o pipeline completo em um servidor do GitHub:
+
+1. Sobe um PostgreSQL temporário
+2. Extrai os dados do Banco Central (`extract.py`)
+3. Valida e carrega no banco (`load.py`)
+4. Gera a versão estática do dashboard com as mesmas consultas da API (`build_static.py`)
+5. Publica a nova versão no GitHub Pages
+
+Se a extração falhar, a publicação é interrompida e a versão anterior continua no ar, sem exibir dados incompletos.
+
+---
+
 # 💻 Como Executar
 
 **Pré-requisitos:** Python 3.11+ e PostgreSQL instalados.
@@ -346,7 +372,8 @@ nexus-intelligence/
 ├── src/
 │   ├── extract.py        # Extração e validação (API SGS)
 │   ├── load.py           # Carga incremental e auditoria
-│   └── api.py            # API FastAPI + servidor do dashboard
+│   ├── api.py            # API FastAPI + servidor do dashboard
+│   └── build_static.py   # Versão estática para o GitHub Pages
 ├── sql/
 │   ├── schema.sql        # Tabelas indicadores e execucoes
 │   ├── consultas.sql     # Consultas de análise
@@ -354,6 +381,7 @@ nexus-intelligence/
 ├── web/
 │   └── index.html        # Dashboard
 ├── docs/                 # Imagens do README
+├── .github/workflows/    # Atualização diária e publicação
 ├── requirements.txt
 └── README.md
 ```
@@ -362,12 +390,12 @@ nexus-intelligence/
 
 # 🗺️ Próximos Passos
 
-- [ ] Atualização automática agendada com GitHub Actions
+- [x] Atualização automática agendada com GitHub Actions
+- [x] Publicação do dashboard na web (GitHub Pages)
 - [ ] Novos indicadores: IGP-M, CDI, PIB e taxa de desemprego
 - [ ] Detecção estatística de anomalias nas séries
 - [ ] Análises explicativas geradas com inteligência artificial
 - [ ] Relatório complementar em Power BI
-- [ ] Publicação do dashboard na web
 
 ---
 

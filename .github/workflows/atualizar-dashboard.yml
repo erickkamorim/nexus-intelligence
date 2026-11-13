@@ -1,0 +1,83 @@
+# Atualiza os dados do Banco Central e publica o dashboard no GitHub Pages.
+# Roda todo dia útil às 19h (horário de Brasília), a cada envio para a branch main
+# e manualmente pela aba Actions (botão "Run workflow").
+
+name: Atualizar dashboard
+
+on:
+  schedule:
+    - cron: "0 22 * * 1-5"   # 22h UTC = 19h em Brasília
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nexus_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nexus_db
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Criar tabelas
+        run: |
+          python -c "import psycopg, os, pathlib; c = psycopg.connect(os.environ['DATABASE_URL'], autocommit=True); c.execute(pathlib.Path('sql/schema.sql').read_text(encoding='utf-8'))"
+
+      - name: Extrair dados do Banco Central
+        run: python src/extract.py --inicio 01/01/2023
+
+      - name: Carregar no PostgreSQL
+        run: python src/load.py
+
+      - name: Gerar versão estática
+        run: python src/build_static.py
+
+      - name: Registro da extração
+        if: always()
+        run: cat logs/extract.log || true
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Publicar no GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
