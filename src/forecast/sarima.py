@@ -15,6 +15,7 @@ Regras:
 
 import logging
 import math
+import os
 import warnings
 from dataclasses import dataclass
 from itertools import product
@@ -49,20 +50,55 @@ def grade_cambio() -> list[Especificacao]:
     return [Especificacao((p, 1, q), (0, 0, 0, 0), t) for p, q, t in product(range(3), range(3), ("n", "t"))]
 
 
+def _ajustar_statsmodels(z: np.ndarray, espec: Especificacao, maxiter: int, inicio=None):
+    from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        modelo = SARIMAX(z, order=espec.ordem, seasonal_order=espec.sazonal, trend=espec.tendencia,
+                         enforce_stationarity=True, enforce_invertibility=True)
+        # cov_type="none": não calcula a covariância dos parâmetros (erros-padrão),
+        # que não é usada aqui e custava a maior parte do tempo de cada ajuste.
+        return modelo.fit(disp=False, maxiter=maxiter, cov_type="none", start_params=inicio)
+
+
+def _aic_statsmodels(argumentos) -> float:
+    """Executado em processos paralelos durante a seleção de ordem."""
+    z, espec, maxiter = argumentos
+    try:
+        return float(_ajustar_statsmodels(z, espec, maxiter).aic)
+    except Exception:
+        return math.inf
+
+
 class BackendStatsmodels:
     """Ajuste com statsmodels.SARIMAX (importado só quando usado)."""
 
-    def __init__(self, maxiter: int = 200):
+    def __init__(self, maxiter: int = 200, processos: int | None = None):
         self.maxiter = maxiter
+        self.processos = processos if processos is not None else max(1, (os.cpu_count() or 2) - 1)
+        self._ultimos_parametros: dict[Especificacao, np.ndarray] = {}
 
     def ajustar(self, z: np.ndarray, espec: Especificacao):
-        from statsmodels.tsa.statespace.sarimax import SARIMAX
+        inicio = self._ultimos_parametros.get(espec)
+        try:
+            resultado = _ajustar_statsmodels(z, espec, self.maxiter, inicio)
+        except Exception:
+            if inicio is None:
+                raise
+            resultado = _ajustar_statsmodels(z, espec, self.maxiter)  # sem ponto de partida
+        # os parâmetros desta origem são o ponto de partida da próxima (convergência mais rápida)
+        self._ultimos_parametros[espec] = np.asarray(resultado.params)
+        return _AjusteStatsmodels(resultado)
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            modelo = SARIMAX(z, order=espec.ordem, seasonal_order=espec.sazonal, trend=espec.tendencia,
-                             enforce_stationarity=True, enforce_invertibility=True)
-            return _AjusteStatsmodels(modelo.fit(disp=False, maxiter=self.maxiter))
+    def aics(self, z: np.ndarray, grade: list[Especificacao]) -> list[float]:
+        """AIC de cada especificação, em paralelo quando houver mais de um núcleo."""
+        tarefas = [(z, e, self.maxiter) for e in grade]
+        if self.processos <= 1:
+            return [_aic_statsmodels(t) for t in tarefas]
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=self.processos) as executor:
+            return list(executor.map(_aic_statsmodels, tarefas))
 
 
 class _AjusteStatsmodels:
@@ -105,11 +141,14 @@ class ModeloSarima:
 
     def _selecionar(self, z: np.ndarray, quando) -> None:
         candidatos = []
-        for espec in self.grade:
-            try:
-                candidatos.append((self.backend.ajustar(z, espec).aic, espec))
-            except Exception as erro:  # combinação que não converge é descartada
-                log.debug("%s falhou na seleção: %s", espec, erro)
+        if hasattr(self.backend, "aics"):
+            candidatos = list(zip(self.backend.aics(z, self.grade), self.grade))
+        else:
+            for espec in self.grade:
+                try:
+                    candidatos.append((self.backend.ajustar(z, espec).aic, espec))
+                except Exception as erro:  # combinação que não converge é descartada
+                    log.debug("%s falhou na seleção: %s", espec, erro)
         candidatos = [c for c in candidatos if math.isfinite(c[0])]
         if not candidatos:
             raise RuntimeError("Nenhuma especificação pôde ser ajustada")

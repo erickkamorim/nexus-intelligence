@@ -57,7 +57,7 @@ def _previsoes_na_origem(modelo, y: pd.Series, cfg: ConfigSerie, origem) -> dict
 
 
 def executar(fonte, cfg: ConfigSerie, modelos: list, origens: list[datetime],
-             usar_focus: bool = False, acumulado_12m: bool = False) -> pd.DataFrame:
+             usar_focus: bool = False, acumulado_12m: bool = False, ao_avancar=None) -> pd.DataFrame:
     """Uma linha por (medida, modelo, origem, h).
 
     medida = 'variacao' (a própria série) ou 'acumulado_12m' (IPCA: meses observados
@@ -67,7 +67,10 @@ def executar(fonte, cfg: ConfigSerie, modelos: list, origens: list[datetime],
     realizado = fonte.atual(cfg.serie)
     calendario = realizado.index
     linhas = []
-    for origem in sorted(origens):
+    ordenadas = sorted(origens)
+    for i, origem in enumerate(ordenadas, start=1):
+        if ao_avancar:
+            ao_avancar(i, len(ordenadas), origem)
         hist = fonte.conhecida_em(cfg.serie, origem)
         tardios = hist.conhecido_desde[hist.conhecido_desde > origem]
         if len(tardios):

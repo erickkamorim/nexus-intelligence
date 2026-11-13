@@ -86,9 +86,25 @@ def mostrar(titulo: str, m: pd.DataFrame) -> None:
         print(m[colunas].to_string(index=False))
 
 
+class Progresso:
+    """Mostra a origem atual, o tempo decorrido e uma estimativa do tempo restante."""
+
+    def __init__(self, rotulo: str):
+        self.rotulo, self.inicio = rotulo, time.time()
+
+    def __call__(self, i: int, total: int, origem) -> None:
+        decorrido = time.time() - self.inicio
+        restante = decorrido / (i - 1) * (total - i + 1) if i > 1 else 0
+        print(f"\r  {self.rotulo}: origem {i}/{total} ({str(origem)[:10]})  "
+              f"decorrido {decorrido / 60:4.1f} min  restante ~{restante / 60:4.1f} min   ", end="", flush=True)
+        if i == total:
+            print()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--sem-sarima", action="store_true", help="Roda só as referências e o Focus")
+    parser.add_argument("--serie", choices=["ipca", "cambio", "todas"], default="todas")
     args = parser.parse_args()
 
     import psycopg
@@ -100,56 +116,65 @@ def main():
         fonte = FonteBanco(conn)
 
         # ---------------------------------------------------------------- IPCA
-        sarima = ModeloSarima("sarima", grade_ipca(), "nivel", reselecionar_a_cada=12, minimo=72)
-        modelos = MODELOS_IPCA + ([] if args.sem_sarima else [sarima])
-        origens = [d + timedelta(minutes=1) for d in fonte.divulgacoes_ipca()]
-        inicio = time.time()
-        print(f"IPCA: {len(origens)} origens, modelos {[m.nome for m in modelos]} ...")
-        prev = executar(fonte, IPCA, modelos, origens, usar_focus=True, acumulado_12m=True)
-        print(f"IPCA concluído em {time.time() - inicio:.0f}s")
-
-        metricas = {}
-        for medida, rotulo in (("variacao", "variação mensal"), ("acumulado_12m", "acumulado em 12 meses")):
-            for ref, nome_ref in (("ingenuo", "modelo ingênuo"), ("focus_mediana", "Boletim Focus")):
-                m = resumo(prev, ref, passo=1, medida=medida)
-                metricas[(medida, ref)] = m
-                m.to_csv(pasta / f"ipca_{medida}_vs_{ref}.csv", index=False)
-                mostrar(f"IPCA · {rotulo} · comparação com o {nome_ref}", m)
-        parametros = {"origens": len(origens), "horizontes": IPCA.horizontes,
-                      "n_erros_intervalo": IPCA.n_erros_intervalo, "primeira_origem": min(origens),
-                      "ultima_origem": max(origens), "selecoes_sarima": sarima.selecoes,
-                      "falhas_sarima": sarima.falhas}
-        gravar(conn, IPCA, "ingenuo", parametros, prev, metricas)
-        prev.to_csv(pasta / "ipca_previsoes.csv", index=False)
-        if sarima.selecoes:
-            print("\nOrdens do SARIMA escolhidas (só com dados de cada origem):")
-            for s in sarima.selecoes:
-                print(f"  {str(s['origem'])[:10]}  {s['especificacao']:<38} AIC {s['aic']:.1f}  ({s['n_obs']} meses)")
-
-        # ---------------------------------------------------------------- Câmbio
-        arima = ModeloSarima("arima_log", grade_cambio(), "log", reselecionar_a_cada=52, minimo=300)
-        modelos = MODELOS_CAMBIO + ([] if args.sem_sarima else [arima])
-        calendario = fonte.atual(CAMBIO.serie).index
-        origens = origens_semanais(calendario, 250, max(CAMBIO.horizontes), PASSO_CAMBIO)
-        inicio = time.time()
-        print(f"\nCâmbio: {len(origens)} origens, modelos {[m.nome for m in modelos]} ...")
-        prev = executar(fonte, CAMBIO, modelos, origens)
-        print(f"Câmbio concluído em {time.time() - inicio:.0f}s")
-        m = resumo(prev, "passeio_aleatorio", passo=PASSO_CAMBIO)
-        m.to_csv(pasta / "cambio_metricas.csv", index=False)
-        mostrar("Câmbio · comparação com o passeio aleatório (referência obrigatória)", m)
-        parametros = {"origens": len(origens), "passo_dias_uteis": PASSO_CAMBIO, "horizontes": CAMBIO.horizontes,
-                      "n_erros_intervalo": CAMBIO.n_erros_intervalo, "primeira_origem": min(origens),
-                      "ultima_origem": max(origens), "selecoes_arima": arima.selecoes, "falhas_arima": arima.falhas}
-        gravar(conn, CAMBIO, "passeio_aleatorio", parametros, prev, {("variacao", "passeio_aleatorio"): m})
-        prev.to_csv(pasta / "cambio_previsoes.csv", index=False)
-        if arima.selecoes:
-            print("\nOrdens do ARIMA escolhidas:")
-            for s in arima.selecoes:
-                print(f"  {str(s['origem'])[:10]}  {s['especificacao']:<24} AIC {s['aic']:.1f}  ({s['n_obs']} dias)")
-
+        if args.serie in ("ipca", "todas"):
+            rodar_ipca(conn, fonte, args, pasta)
+        if args.serie in ("cambio", "todas"):
+            rodar_cambio(conn, fonte, args, pasta)
     print(f"\nResultados gravados no banco (backtest_*) e em {pasta}")
 
 
-if __name__ == "__main__":
+def rodar_ipca(conn, fonte, args, pasta):
+    sarima = ModeloSarima("sarima", grade_ipca(), "nivel", reselecionar_a_cada=12, minimo=72)
+    modelos = MODELOS_IPCA + ([] if args.sem_sarima else [sarima])
+    origens = [d + timedelta(minutes=1) for d in fonte.divulgacoes_ipca()]
+    inicio = time.time()
+    print(f"IPCA: {len(origens)} origens, modelos {[m.nome for m in modelos]} ...")
+    prev = executar(fonte, IPCA, modelos, origens, usar_focus=True, acumulado_12m=True,
+                    ao_avancar=Progresso("IPCA"))
+    print(f"IPCA concluído em {time.time() - inicio:.0f}s")
+
+    metricas = {}
+    for medida, rotulo in (("variacao", "variação mensal"), ("acumulado_12m", "acumulado em 12 meses")):
+        for ref, nome_ref in (("ingenuo", "modelo ingênuo"), ("focus_mediana", "Boletim Focus")):
+            m = resumo(prev, ref, passo=1, medida=medida)
+            metricas[(medida, ref)] = m
+            m.to_csv(pasta / f"ipca_{medida}_vs_{ref}.csv", index=False)
+            mostrar(f"IPCA · {rotulo} · comparação com o {nome_ref}", m)
+    parametros = {"origens": len(origens), "horizontes": IPCA.horizontes,
+                  "n_erros_intervalo": IPCA.n_erros_intervalo, "primeira_origem": min(origens),
+                  "ultima_origem": max(origens), "selecoes_sarima": sarima.selecoes,
+                  "falhas_sarima": sarima.falhas}
+    gravar(conn, IPCA, "ingenuo", parametros, prev, metricas)
+    prev.to_csv(pasta / "ipca_previsoes.csv", index=False)
+    if sarima.selecoes:
+        print("\nOrdens do SARIMA escolhidas (só com dados de cada origem):")
+        for s in sarima.selecoes:
+            print(f"  {str(s['origem'])[:10]}  {s['especificacao']:<38} AIC {s['aic']:.1f}  ({s['n_obs']} meses)")
+
+
+
+def rodar_cambio(conn, fonte, args, pasta):
+    arima = ModeloSarima("arima_log", grade_cambio(), "log", reselecionar_a_cada=52, minimo=300)
+    modelos = MODELOS_CAMBIO + ([] if args.sem_sarima else [arima])
+    calendario = fonte.atual(CAMBIO.serie).index
+    origens = origens_semanais(calendario, 250, max(CAMBIO.horizontes), PASSO_CAMBIO)
+    inicio = time.time()
+    print(f"\nCâmbio: {len(origens)} origens, modelos {[m.nome for m in modelos]} ...")
+    prev = executar(fonte, CAMBIO, modelos, origens, ao_avancar=Progresso("Câmbio"))
+    print(f"Câmbio concluído em {time.time() - inicio:.0f}s")
+    m = resumo(prev, "passeio_aleatorio", passo=PASSO_CAMBIO)
+    m.to_csv(pasta / "cambio_metricas.csv", index=False)
+    mostrar("Câmbio · comparação com o passeio aleatório (referência obrigatória)", m)
+    parametros = {"origens": len(origens), "passo_dias_uteis": PASSO_CAMBIO, "horizontes": CAMBIO.horizontes,
+                  "n_erros_intervalo": CAMBIO.n_erros_intervalo, "primeira_origem": min(origens),
+                  "ultima_origem": max(origens), "selecoes_arima": arima.selecoes, "falhas_arima": arima.falhas}
+    gravar(conn, CAMBIO, "passeio_aleatorio", parametros, prev, {("variacao", "passeio_aleatorio"): m})
+    prev.to_csv(pasta / "cambio_previsoes.csv", index=False)
+    if arima.selecoes:
+        print("\nOrdens do ARIMA escolhidas:")
+        for s in arima.selecoes:
+            print(f"  {str(s['origem'])[:10]}  {s['especificacao']:<24} AIC {s['aic']:.1f}  ({s['n_obs']} dias)")
+
+
+if __name__ == "__main__":  # necessário no Windows para os processos paralelos
     main()

@@ -21,6 +21,20 @@ entra como mais um modelo no mesmo motor de backtest, com a mesma defesa contra 
 - Uma combinação que não converge é descartada. Se nenhuma convergir, a origem fica sem
   previsão desse modelo e a falha é contada (`falhas_sarima` nos parâmetros da execução).
 
+## Desempenho
+
+A primeira execução real mostrou que a maior parte do tempo de cada ajuste ia para o cálculo
+numérico da covariância dos parâmetros (erros-padrão), que não é usada aqui: os intervalos vêm
+da simulação. Por isso:
+
+- `cov_type="none"` no ajuste;
+- os parâmetros da origem anterior são o ponto de partida da origem seguinte (mesma
+  especificação), o que acelera a convergência; se esse ponto de partida falhar, o ajuste é
+  refeito do zero;
+- a seleção de ordem avalia as combinações em paralelo, usando os núcleos disponíveis.
+
+Nenhuma dessas mudanças altera o que o modelo enxerga em cada origem.
+
 ## Intervalos por simulação
 
 - 1.000 caminhos simulados a partir do último dado conhecido; quantis de 2,5%, 10%, 90% e
