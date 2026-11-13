@@ -214,3 +214,54 @@ LANGUAGE sql STABLE AS $$
       AND f.disponivel_em <= p_momento
     ORDER BY f.mes_alvo, f.data_estatistica DESC;
 $$;
+
+-- -----------------------------------------------------------------------------
+-- 6. Backtests (Fase 2): cada execução guarda parâmetros e versão do código,
+--    cada previsão guarda a origem, o alvo e o valor realizado.
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS backtest_execucoes (
+    id              BIGSERIAL    PRIMARY KEY,
+    iniciado_em     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    serie           VARCHAR(40)  NOT NULL,
+    referencia      VARCHAR(60)  NOT NULL,
+    versao_codigo   VARCHAR(60),
+    parametros      JSONB        NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS backtest_previsoes (
+    execucao_id       BIGINT        NOT NULL REFERENCES backtest_execucoes(id) ON DELETE CASCADE,
+    modelo            VARCHAR(60)   NOT NULL,
+    origem            TIMESTAMPTZ   NOT NULL,
+    ultimo_conhecido  DATE          NOT NULL,
+    h                 SMALLINT      NOT NULL CHECK (h > 0),
+    alvo              DATE          NOT NULL,
+    previsto          NUMERIC(18,6) NOT NULL,
+    li80              NUMERIC(18,6),
+    ls80              NUMERIC(18,6),
+    li95              NUMERIC(18,6),
+    ls95              NUMERIC(18,6),
+    realizado         NUMERIC(18,6) NOT NULL,
+    PRIMARY KEY (execucao_id, modelo, origem, h),
+    CONSTRAINT ck_alvo_futuro CHECK (alvo > ultimo_conhecido),
+    CONSTRAINT ck_ultimo_antes_da_origem CHECK (ultimo_conhecido <= origem::date),
+    CONSTRAINT ck_intervalos CHECK (li95 IS NULL OR (li95 <= li80 AND li80 <= previsto AND previsto <= ls80 AND ls80 <= ls95))
+);
+
+CREATE TABLE IF NOT EXISTS backtest_metricas (
+    execucao_id    BIGINT        NOT NULL REFERENCES backtest_execucoes(id) ON DELETE CASCADE,
+    comparacao     VARCHAR(60)   NOT NULL,   -- contra qual referência
+    modelo         VARCHAR(60)   NOT NULL,
+    h              SMALLINT      NOT NULL,
+    n              INTEGER       NOT NULL,
+    mae            NUMERIC(18,6),
+    rmse           NUMERIC(18,6),
+    rmse_relativo  NUMERIC(10,4),
+    cobertura80    NUMERIC(6,4),
+    cobertura95    NUMERIC(6,4),
+    n_comum        INTEGER,
+    dm             NUMERIC(10,4),
+    p_valor        NUMERIC(10,6),
+    p_melhor       NUMERIC(10,6),
+    veredito       VARCHAR(40),
+    PRIMARY KEY (execucao_id, comparacao, modelo, h)
+);

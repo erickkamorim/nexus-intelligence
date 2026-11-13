@@ -94,8 +94,9 @@ def coletar(args) -> int:
 
         def etapa(fonte, executar):
             execucao = arm.iniciar_execucao(conn, fonte)
+            contexto = {"lidos": 0, "problemas": 0}  # preenchido pela etapa, inclusive se ela falhar depois
             try:
-                lidos, novas, problemas = executar(execucao)
+                lidos, novas, problemas = executar(execucao, contexto)
                 status = "falha" if graves(problemas) else "sucesso"
                 arm.finalizar_execucao(conn, execucao, status, lidos, novas, len(problemas),
                                        "Problemas graves na validação: nada foi gravado" if status == "falha" else None)
@@ -104,15 +105,18 @@ def coletar(args) -> int:
             except Exception as erro:
                 conn.rollback()
                 log.exception("%s falhou", fonte)
-                arm.finalizar_execucao(conn, execucao, "falha", 0, None, 0, str(erro))
+                arm.finalizar_execucao(conn, execucao, "falha", contexto["lidos"], None,
+                                       contexto["problemas"], f"{type(erro).__name__}: {erro}")
                 falhas.append(fonte)
 
         # 1. PTAX
         cotacoes = []
 
-        def etapa_ptax(execucao):
+        def etapa_ptax(execucao, contexto):
             cotacoes.extend(ptax.coletar(args.inicio_ptax, hoje))
+            contexto["lidos"] = len(cotacoes)
             problemas = validar_serie(cotacoes, "diaria", (1.0, 15.0), hoje)
+            contexto["problemas"] = len(problemas)
             relatar("ptax", problemas)
             novas = None if graves(problemas) else arm.gravar_serie(conn, execucao, consolidar_duplicadas(cotacoes))
             return len(cotacoes), novas, problemas
@@ -129,9 +133,11 @@ def coletar(args) -> int:
             falhas.append("ibge_calendario")
 
         # 3. IPCA
-        def etapa_ipca(execucao):
+        def etapa_ipca(execucao, contexto):
             obs = sgs.coletar_ipca(args.inicio_ipca, hoje, divulgacoes)
+            contexto["lidos"] = len(obs)
             problemas = validar_serie(obs, "mensal", (-3.0, 5.0), hoje)
+            contexto["problemas"] = len(problemas)
             relatar("ipca", problemas)
             novas = None if graves(problemas) else arm.gravar_serie(conn, execucao, consolidar_duplicadas(obs))
             por_origem = Counter(o.origem_disponibilidade for o in obs)
@@ -140,11 +146,13 @@ def coletar(args) -> int:
         etapa("sgs_ipca", etapa_ipca)
 
         # 4. Focus
-        def etapa_focus(execucao):
+        def etapa_focus(execucao, contexto):
             if not calendario:
                 raise RuntimeError("Sem calendário de dias úteis (PTAX): Focus não pode ser datado")
             regs = focus.coletar(args.inicio_focus, calendario, hoje)
+            contexto["lidos"] = len(regs)
             problemas = validar_focus(regs)
+            contexto["problemas"] = len(problemas)
             relatar("focus", problemas)
             novas = None if graves(problemas) else arm.gravar_focus(conn, execucao, regs)
             return len(regs), novas, problemas
