@@ -2,7 +2,7 @@
 
 O SGS devolve apenas data e valor: não informa quando o dado foi publicado.
 A data de divulgação do IPCA vem do calendário do IBGE (ver ibge.py) e é
-anexada aqui; sem ela, a observação fica marcada como 'nao_verificavel'.
+anexada aqui (ver anexar_divulgacao).
 """
 
 from datetime import date, datetime, timedelta
@@ -62,10 +62,29 @@ def coletar_ipca(inicio: date, fim: date, divulgacoes: dict[date, datetime], obt
         })
         observacoes += interpretar(obter(url), "ipca_mensal", "sgs_433", mensal=True)
 
-    com_data = []
+    return anexar_divulgacao(observacoes, divulgacoes)
+
+
+def anexar_divulgacao(observacoes: list[Observacao], divulgacoes: dict[date, datetime]) -> list[Observacao]:
+    """Anexa a data de divulgação de cada mês.
+
+    1. Mês no calendário do IBGE -> data exata ('ibge_calendario').
+    2. Mês fora do calendário, mas com um mês POSTERIOR no calendário ->
+       o IPCA é publicado em ordem cronológica, então o mês já estava publicado
+       quando saiu o primeiro mês posterior do calendário. Essa data é um
+       limite superior comprovado: pode ser mais tarde que a publicação real,
+       nunca mais cedo ('ibge_limite_superior').
+    3. Sem nenhuma das duas provas -> 'nao_verificavel' (fica fora dos backtests).
+    """
+    meses_calendario = sorted(divulgacoes)
+    saida = []
     for o in observacoes:
-        divulgado = divulgacoes.get(o.data_referencia)
-        com_data.append(Observacao(
-            o.serie, o.data_referencia, o.valor, divulgado,
-            "ibge_calendario" if divulgado else "nao_verificavel", o.fonte))
-    return com_data
+        exata = divulgacoes.get(o.data_referencia)
+        if exata:
+            quando, origem = exata, "ibge_calendario"
+        else:
+            posteriores = [divulgacoes[m] for m in meses_calendario if m > o.data_referencia]
+            quando = min(posteriores) if posteriores else None
+            origem = "ibge_limite_superior" if quando else "nao_verificavel"
+        saida.append(Observacao(o.serie, o.data_referencia, o.valor, quando, origem, o.fonte))
+    return saida

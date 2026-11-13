@@ -102,25 +102,72 @@ def test_focus_validacao_detecta_duplicidade_e_mediana_incoerente():
 
 
 # ---------------------------------------------------------------- IBGE
-def test_ibge_ignora_ipca15_e_ipcae_e_le_a_referencia():
-    itens = [
-        {"titulo": "IPCA - Índice Nacional de Preços ao Consumidor Amplo", "referencia": "1/2024",
-         "data_divulgacao": "08/02/2024 09:00:00"},
-        {"titulo": "IPCA-15 - Índice Nacional de Preços ao Consumidor Amplo 15", "referencia": "2/2024",
-         "data_divulgacao": "27/02/2024 09:00:00"},
-        {"titulo": "IPCA-E", "referencia": "1/2024 a 3/2024", "data_divulgacao": "26/03/2024 09:00:00"},
-    ]
-    assert ibge.interpretar(itens) == {date(2024, 1, 1): datetime(2024, 2, 8, 9, tzinfo=BRASILIA)}
+# Itens copiados da amostra real do calendário (13/11/2026), campos essenciais
+def _item(id_, produto_id, titulo, ano, mes, quando):
+    return {"id": id_, "titulo": titulo, "data_divulgacao": quando, "produto_id": produto_id,
+            "ano_referencia_inicio": ano, "mes_referencia_inicio": mes,
+            "ano_referencia_fim": 0, "mes_referencia_fim": 0}
+
+
+AGORA = datetime(2026, 11, 13, 16, 0, tzinfo=BRASILIA)
+CALENDARIO_REAL = [
+    _item(4321, 9256, "Índice Nacional de Preços ao Consumidor Amplo", 2026, 10, "12/11/2026 12:00:00"),
+    _item(4320, 9258, "Índice Nacional de Preços ao Consumidor", 2026, 10, "12/11/2026 12:00:00"),
+    _item(4314, 9260, "Índice Nacional de Preços ao Consumidor Amplo 15", 2026, 10, "23/10/2026 12:00:00"),
+    _item(4323, 9227, "Pesquisa Mensal de Comércio", 2026, 9, "13/11/2026 12:00:00"),
+]
+
+
+def test_ibge_filtra_o_ipca_pelo_produto_id():
+    assert ibge.interpretar(CALENDARIO_REAL, AGORA) == {
+        date(2026, 10, 1): datetime(2026, 11, 12, 12, 0, tzinfo=BRASILIA)}
+
+
+def test_ibge_ignora_divulgacao_agendada_para_o_futuro():
+    futuro = [_item(1, 9256, "IPCA", 2026, 11, "10/12/2026 12:00:00")]
+    assert ibge.interpretar(futuro, AGORA) == {}
 
 
 def test_ibge_recusa_divulgacao_antes_do_fim_do_mes():
     with pytest.raises(ValueError):
-        ibge.interpretar([{"titulo": "IPCA", "referencia": "2/2024", "data_divulgacao": "10/02/2024 09:00:00"}])
+        ibge.interpretar([_item(1, 9256, "IPCA", 2026, 10, "10/10/2026 12:00:00")], AGORA)
 
 
 def test_ibge_formato_desconhecido_falha_em_vez_de_adivinhar():
     with pytest.raises(ValueError):
-        ibge.interpretar([{"titulo": "IPCA", "quando": "amanhã"}])
+        ibge.interpretar([{"titulo": "IPCA", "quando": "amanhã"}], AGORA)
+
+
+def test_ibge_paginacao_le_todas_as_paginas():
+    paginas = iter([{"totalPages": 2, "items": [1, 2]}, {"totalPages": 2, "items": [3]}])
+    assert ibge.baixar(date(2015, 1, 1), date(2026, 1, 1), obter=lambda url: next(paginas)) == [1, 2, 3]
+
+
+# ---------------------------------------------------------------- Limite superior comprovado
+def test_mes_fora_do_calendario_usa_a_primeira_divulgacao_posterior():
+    divulgacoes = {date(2017, 1, 1): datetime(2017, 2, 8, 12, tzinfo=BRASILIA),
+                   date(2017, 2, 1): datetime(2017, 3, 10, 12, tzinfo=BRASILIA)}
+    obs = [Observacao("ipca_mensal", date(2010, 5, 1), 0.4, None, "nao_verificavel", "t"),
+           Observacao("ipca_mensal", date(2017, 1, 1), 0.3, None, "nao_verificavel", "t")]
+    antigo, exato = sgs.anexar_divulgacao(obs, divulgacoes)
+    assert antigo.origem_disponibilidade == "ibge_limite_superior"
+    assert antigo.disponivel_em == datetime(2017, 2, 8, 12, tzinfo=BRASILIA)
+    assert exato.origem_disponibilidade == "ibge_calendario"
+
+
+def test_limite_superior_nunca_e_anterior_a_divulgacao_real():
+    """Propriedade: o limite vem de um mês posterior, logo é >= à divulgação real."""
+    divulgacoes = {date(2020, m, 1): datetime(2020, m + 1, 10, 12, tzinfo=BRASILIA) for m in range(3, 12)}
+    obs = [Observacao("ipca_mensal", date(2020, m, 1), 0.2, None, "nao_verificavel", "t") for m in (1, 2)]
+    for o in sgs.anexar_divulgacao(obs, divulgacoes):
+        assert o.disponivel_em.date() > o.data_referencia.replace(day=28)
+        assert o.disponivel_em == datetime(2020, 4, 10, 12, tzinfo=BRASILIA)
+
+
+def test_mes_posterior_a_todo_o_calendario_fica_nao_verificavel():
+    divulgacoes = {date(2020, 1, 1): datetime(2020, 2, 7, 12, tzinfo=BRASILIA)}
+    obs = [Observacao("ipca_mensal", date(2020, 2, 1), 0.2, None, "nao_verificavel", "t")]
+    assert sgs.anexar_divulgacao(obs, divulgacoes)[0].origem_disponibilidade == "nao_verificavel"
 
 
 # ---------------------------------------------------------------- Validação de séries

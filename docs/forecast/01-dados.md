@@ -21,7 +21,7 @@ Os modelos nunca leem as tabelas diretamente: tudo passa pelas funções
 | Série | Fonte do valor | Fonte da data de divulgação | Tipo de prova |
 |---|---|---|---|
 | Dólar (PTAX venda) | API PTAX do BCB (Olinda) | Campo `dataHoraCotacao` de cada boletim | Registro da própria fonte |
-| IPCA mensal | SGS 433 (BCB) | API de calendário de divulgações do IBGE (v3) | Calendário oficial do IBGE |
+| IPCA mensal | SGS 433 (BCB) | API de calendário de divulgações do IBGE (v3) | Calendário oficial do IBGE ou limite superior comprovado (ver abaixo) |
 | Focus · IPCA mensal | API de Expectativas do BCB (Olinda) | Primeiro dia útil após o fechamento semanal | Regra oficial de divulgação do Relatório Focus |
 
 Observações:
@@ -38,6 +38,34 @@ Observações:
   exemplo, um mês de IPCA que não aparece no calendário do IBGE), o valor é gravado com
   origem `nao_verificavel` e **não entra** em nenhum treino ou comparação histórica.
   A quantidade de meses nessa situação é registrada em cada execução.
+
+## IPCA: calendário do IBGE e limite superior comprovado
+
+O formato do calendário foi conferido com uma amostra real (13/11/2026):
+
+- a API devolve todas as pesquisas do IBGE; o IPCA é identificado pelo `produto_id` 9256
+  (o IPCA-15, 9260, e o INPC, 9258, ficam de fora);
+- o mês de referência vem nos campos `ano_referencia_inicio` e `mes_referencia_inicio`;
+- `data_divulgacao` vem sem fuso horário. É interpretada como horário de Brasília, a leitura
+  mais tardia possível, portanto a mais conservadora;
+- divulgações agendadas para o futuro não contam como prova;
+- **o calendário não cobre o início do histórico** (a consulta de 2004 a 2006 voltou vazia).
+
+Para os meses anteriores ao início do calendário, a data usada é um **limite superior
+comprovado**: o IBGE publica o IPCA em ordem cronológica, então um mês antigo já estava
+publicado quando saiu o primeiro mês posterior que consta no calendário. Essa data pode ser
+mais tardia que a publicação real, mas nunca mais cedo, por isso não cria vazamento.
+
+Consequência prática: nenhum backtest pode ter data de origem anterior à primeira divulgação
+registrada no calendário. Depois dela, todo o histórico anterior fica disponível para treino.
+Quando o calendário trouxer a data exata de um mês, ela substitui o limite superior
+(o contrário nunca acontece).
+
+| Origem | Significado |
+|---|---|
+| `ibge_calendario` | Data exata do calendário oficial |
+| `ibge_limite_superior` | Data da primeira divulgação posterior registrada no calendário |
+| `nao_verificavel` | Mês posterior a tudo o que o calendário registra: fora dos backtests |
 
 ## Versões (vintages)
 
@@ -84,8 +112,7 @@ duplicidades idênticas e lacunas de até alguns dias no câmbio (feriados).
 
 ## Pendências antes da integração
 
-1. Rodar `python src/coletar_forecast.py --sondar` e conferir as amostras reais,
-   principalmente o formato do calendário do IBGE e até que ano ele cobre.
-2. Ajustar o leitor do calendário do IBGE ao formato real, se necessário.
-3. Rodar a coleta completa e registrar a cobertura: quantos meses de IPCA têm data de
-   divulgação comprovada.
+1. ~~Conferir as amostras reais das APIs~~ (feito em 13/11/2026: PTAX, SGS e Focus no formato
+   esperado; leitor do IBGE refeito para o formato real).
+2. Registrar a cobertura do calendário do IBGE: primeiro mês com data exata.
+3. Rodar a coleta completa e registrar quantos meses de IPCA ficaram em cada origem.

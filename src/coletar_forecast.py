@@ -16,22 +16,35 @@ daquela fonte inteira e a execução termina com erro.
 """
 
 import argparse
+from collections import Counter
 import json
 import logging
 import os
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from coleta import focus, ibge, ptax, sgs  # noqa: E402
 from coleta.http import obter_json  # noqa: E402
+from coleta.modelos import BRASILIA  # noqa: E402
 from coleta.validacao import graves, validar_focus, validar_serie  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/nexus_db")
 log = logging.getLogger("nexus.coleta")
+
+
+def cobertura_calendario_ipca() -> dict:
+    """Primeira e última divulgação do IPCA que o calendário do IBGE conhece."""
+    agora = datetime.now(BRASILIA)
+    divulgacoes = ibge.coletar(date(2000, 1, 1), date.today(), agora)
+    meses = sorted(divulgacoes)
+    return {"meses_com_data": len(meses),
+            "primeiro_mes": f"{meses[0]:%m/%Y}" if meses else None,
+            "ultimo_mes": f"{meses[-1]:%m/%Y}" if meses else None,
+            "primeira_divulgacao": f"{divulgacoes[meses[0]]:%d/%m/%Y %H:%M}" if meses else None}
 
 
 def sondar(pasta: Path) -> None:
@@ -45,6 +58,7 @@ def sondar(pasta: Path) -> None:
             "busca": "IPCA", "de": "01-01-2015", "ate": f"{hoje:%m-%d-%Y}", "tipo": 1, "qtd": 20, "page": 1})),
         "ibge_calendario_antigo": lambda: obter_json(ibge.montar_url(ibge.URL, {
             "busca": "IPCA", "de": "01-01-2004", "ate": "12-31-2006", "tipo": 1, "qtd": 20, "page": 1})),
+        "ibge_cobertura_ipca": lambda: cobertura_calendario_ipca(),
         "sgs_433": lambda: obter_json(sgs.montar_url(sgs.URL.format(codigo=433), {
             "formato": "json", "dataInicial": "01/01/2024", "dataFinal": "31/03/2024"})),
         "focus": lambda: obter_json(focus.montar_url(focus.URL, {
@@ -108,7 +122,7 @@ def coletar(args) -> int:
         # 2. Calendário do IBGE
         divulgacoes = {}
         try:
-            divulgacoes = ibge.coletar(args.inicio_ipca, hoje)
+            divulgacoes = ibge.coletar(args.inicio_ipca, hoje, datetime.now(BRASILIA))
             arm.gravar_divulgacoes(conn, divulgacoes)
         except Exception:
             log.exception("Calendário do IBGE indisponível: o IPCA ficará como 'nao_verificavel'")
@@ -120,8 +134,8 @@ def coletar(args) -> int:
             problemas = validar_serie(obs, "mensal", (-3.0, 5.0), hoje)
             relatar("ipca", problemas)
             novas = None if graves(problemas) else arm.gravar_serie(conn, execucao, obs)
-            verificaveis = sum(o.disponivel_em is not None for o in obs)
-            log.info("IPCA: %s de %s meses com data de divulgação comprovada", verificaveis, len(obs))
+            por_origem = Counter(o.origem_disponibilidade for o in obs)
+            log.info("IPCA, origem da data de divulgação: %s", dict(por_origem))
             return len(obs), novas, problemas
         etapa("sgs_ipca", etapa_ipca)
 

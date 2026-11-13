@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS serie_versoes (
     origem_disponibilidade  VARCHAR(30)   NOT NULL CHECK (origem_disponibilidade IN (
                                 'ptax_datahora_cotacao',   -- timestamp do boletim do BCB
                                 'ibge_calendario',         -- calendário oficial do IBGE
+                                'ibge_limite_superior',    -- divulgação de um mês posterior (publicação em ordem)
                                 'nao_verificavel')),       -- sem prova: fica fora dos backtests
 
     -- Como o NEXUS obteve esta versão
@@ -156,13 +157,15 @@ BEGIN
 
     -- Data de divulgação descoberta depois (ex.: calendário do IBGE coletado
     -- após a série) é uma informação nova sobre a mesma versão, não um novo valor.
+    -- Só melhora a prova: sem prova -> qualquer prova; limite superior -> data exata.
     UPDATE serie_versoes v
        SET disponivel_em = s.disponivel_em,
            origem_disponibilidade = s.origem_disponibilidade
       FROM stg_serie s
      WHERE v.serie = s.serie AND v.data_referencia = s.data_referencia
-       AND v.origem_disponibilidade = 'nao_verificavel'
-       AND s.origem_disponibilidade <> 'nao_verificavel';
+       AND s.origem_disponibilidade <> 'nao_verificavel'
+       AND (v.origem_disponibilidade = 'nao_verificavel'
+            OR (v.origem_disponibilidade = 'ibge_limite_superior' AND s.origem_disponibilidade = 'ibge_calendario'));
 
     TRUNCATE stg_serie;
     RETURN novas;

@@ -67,6 +67,20 @@ DO $$ BEGIN
     RAISE EXCEPTION 'FALHOU: observação com data comprovada deveria entrar no backtest'; END IF;
 END $$;
 
+-- 6b) Limite superior é substituído pela data exata quando ela aparece (nunca o contrário)
+INSERT INTO stg_serie VALUES ('ipca_mensal', '2010-05-01', 0.43, '2017-02-08 12:00-03', 'ibge_limite_superior', 'teste');
+SELECT registrar_versoes(1, FALSE);
+INSERT INTO stg_serie VALUES ('ipca_mensal', '2010-05-01', 0.43, '2010-06-09 09:00-03', 'ibge_calendario', 'teste');
+SELECT registrar_versoes(1, FALSE);
+INSERT INTO stg_serie VALUES ('ipca_mensal', '2010-05-01', 0.43, '2018-01-01 09:00-03', 'ibge_limite_superior', 'teste');
+SELECT registrar_versoes(1, FALSE);
+DO $$ BEGIN
+  IF (SELECT origem_disponibilidade FROM serie_versoes WHERE data_referencia = '2010-05-01') <> 'ibge_calendario' THEN
+    RAISE EXCEPTION 'FALHOU: data exata deveria substituir o limite superior e não ser substituída por ele'; END IF;
+  IF (SELECT COUNT(*) FROM serie_versoes WHERE data_referencia = '2010-05-01') <> 1 THEN
+    RAISE EXCEPTION 'FALHOU: melhorar a prova não pode criar versão'; END IF;
+END $$;
+
 -- 7) Restrições de integridade
 DO $$ BEGIN
   BEGIN

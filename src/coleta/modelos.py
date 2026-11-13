@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 BRASILIA = ZoneInfo("America/Sao_Paulo")
 
-ORIGENS_SERIE = {"ptax_datahora_cotacao", "ibge_calendario", "nao_verificavel"}
+ORIGENS_SERIE = {"ptax_datahora_cotacao", "ibge_calendario", "ibge_limite_superior", "nao_verificavel"}
 ORIGENS_FOCUS = {"focus_relatorio_semanal", "nao_verificavel"}
 
 
