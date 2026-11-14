@@ -29,7 +29,10 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 14.5px;
-         line-height: 1.45; -webkit-font-smoothing: antialiased; }
+         line-height: 1.45; -webkit-font-smoothing: antialiased;
+         /* papel milimetrado bem discreto: remete a gráficos econômicos */
+         background-image: radial-gradient(rgba(255, 255, 255, .045) 1px, transparent 1.2px);
+         background-size: 26px 26px; background-attachment: fixed; }
   svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8;
           stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
@@ -70,7 +73,8 @@
   .seg .pill { position: absolute; top: 5px; bottom: 5px; border-radius: 999px; background: var(--yellow);
                transition: left .35s cubic-bezier(.3,.9,.3,1), width .35s cubic-bezier(.3,.9,.3,1); }
 
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; min-width: 0; }
+  .card { background: linear-gradient(180deg, #151515, #101010); border: 1px solid var(--line); border-radius: var(--radius);
+          padding: 26px; min-width: 0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 20px 40px -24px rgba(0, 0, 0, .9); }
   .grid { display: grid; gap: 18px; }
 
   /* ---------- Destaque ---------- */
@@ -123,7 +127,10 @@
   .chart { position: relative; width: 100%; }
   .chart svg { display: block; width: 100%; overflow: visible; }
   .axis { fill: #6d6d6d; font: 11px var(--body); }
-  .grid-line { stroke: var(--line); stroke-dasharray: 2 6; }
+  .grid-line { stroke: #1d1d1d; stroke-width: 1; }
+  .grid-line.zero { stroke: #333; }
+  .brilho { filter: drop-shadow(0 0 7px rgba(255, 214, 10, .45)); }
+  .futuro-rotulo { font: 700 10.5px var(--body); letter-spacing: .3px; }
   .end-label rect { rx: 8; }
   .end-label text { font: 700 11px var(--body); }
   .anim .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: desenha 1.4s cubic-bezier(.4,.1,.2,1) forwards; }
@@ -134,11 +141,13 @@
   @keyframes aparece { to { opacity: 1; } }
   @keyframes cresce { to { transform: scaleY(1); } }
   @keyframes pop { to { transform: scale(1); } }
-  .tip { position: absolute; pointer-events: none; background: rgba(0,0,0,.92); border: 1px solid #333; border-radius: 16px;
-         padding: 11px 13px; font-size: 12px; white-space: nowrap; transform: translate(-50%, calc(-100% - 16px));
-         opacity: 0; transition: opacity .15s; z-index: 5; backdrop-filter: blur(6px); }
-  .tip b { display: block; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
-  .tip div { display: flex; align-items: center; gap: 8px; line-height: 1.7; }
+  .tip { position: absolute; pointer-events: none; background: rgba(12, 12, 12, .94); border: 1px solid #2c2c2c; border-radius: 16px;
+         padding: 12px 14px; font-size: 12px; white-space: nowrap; transform: translate(-50%, calc(-100% - 18px));
+         opacity: 0; transition: opacity .15s, left .08s; z-index: 5; backdrop-filter: blur(8px);
+         box-shadow: 0 16px 32px -12px rgba(0, 0, 0, .8); min-width: 170px; }
+  .tip b { display: block; font: 600 11.5px var(--wide); color: var(--yellow); margin-bottom: 7px; letter-spacing: .2px; }
+  .tip div { display: flex; align-items: center; gap: 8px; line-height: 1.75; }
+  .tip div strong { margin-left: auto; padding-left: 14px; font-variant-numeric: tabular-nums; }
   .tip i { width: 8px; height: 8px; border-radius: 50%; }
   .tip .note { margin-top: 6px; padding-top: 6px; border-top: 1px solid #2a2a2a; color: var(--yellow); font-weight: 600; }
 
@@ -163,7 +172,8 @@
 
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 0 10px 10px; }
-  td { padding: 13px 10px; border-top: 1px solid var(--line); }
+  td { padding: 13px 10px; border-top: 1px solid var(--line); transition: background .15s; }
+  tbody tr:hover td { background: rgba(255, 255, 255, .025); }
   td:first-child, th:first-child { padding-left: 0; }
   .ok { color: var(--down); } .bad { color: var(--up); } .muted { color: var(--muted); }
   .bar-cov { height: 6px; background: var(--card-2); border-radius: 6px; overflow: hidden; width: 100px; }
@@ -186,6 +196,16 @@
   .nota { color: var(--muted); font-size: 12.5px; margin-top: 18px; line-height: 1.6; }
   .nota a, .link-amarelo { color: var(--yellow); text-decoration: none; font-weight: 600; }
   .nota a:hover, .link-amarelo:hover { text-decoration: underline; }
+  /* régua de incerteza dos cartões de previsão */
+  .regua { position: relative; height: 34px; margin: 4px 0 2px; }
+  .regua .trilho { position: absolute; left: 0; right: 0; top: 15px; height: 4px; border-radius: 4px; background: #222; }
+  .regua .f95 { position: absolute; top: 13px; height: 8px; border-radius: 8px; background: rgba(255, 214, 10, .18); }
+  .regua .f80 { position: absolute; top: 11px; height: 12px; border-radius: 12px; background: rgba(255, 214, 10, .5); }
+  .regua .ponto { position: absolute; top: 7px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%;
+                  background: var(--yellow); border: 4px solid #121212; box-shadow: 0 0 0 1px var(--yellow), 0 0 14px rgba(255, 214, 10, .5); }
+  .regua .mercado { position: absolute; top: 4px; width: 2px; height: 26px; margin-left: -1px; background: var(--blue); border-radius: 2px; }
+  .regua .mercado::after { content: ""; position: absolute; top: -3px; left: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
+  .regua-escala { display: flex; justify-content: space-between; color: #5f5f5f; font-size: 11px; font-variant-numeric: tabular-nums; }
   .kpi-sub { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
   .kpi-sub b { color: var(--text); font-weight: 600; }
 
@@ -383,16 +403,19 @@
       <div class="card kpi reveal">
         <div class="kpi-top"><div class="kpi-label"><span class="ico"><svg class="i"><use href="#i-cart"/></svg></span><span id="kp1-rot">IPCA do próximo mês</span></div></div>
         <div class="kpi-value" id="kp1">—</div>
+        <div class="regua" id="kp1-regua"></div>
         <div class="kpi-sub" id="kp1-sub">&nbsp;</div>
       </div>
       <div class="card kpi reveal">
         <div class="kpi-top"><div class="kpi-label"><span class="ico"><svg class="i"><use href="#i-percent"/></svg></span><span id="kp2-rot">IPCA em 12 meses</span></div></div>
         <div class="kpi-value" id="kp2">—</div>
+        <div class="regua" id="kp2-regua"></div>
         <div class="kpi-sub" id="kp2-sub">&nbsp;</div>
       </div>
       <div class="card kpi reveal">
         <div class="kpi-top"><div class="kpi-label"><span class="ico"><svg class="i"><use href="#i-dollar"/></svg></span><span>Dólar em 21 dias úteis</span></div></div>
         <div class="kpi-value" id="kp3">—</div>
+        <div class="regua" id="kp3-regua"></div>
         <div class="kpi-sub" id="kp3-sub">&nbsp;</div>
       </div>
     </div>
@@ -485,15 +508,35 @@ function contar(el, valor, casas, antes = "", depois = "") {
 function niceTicks(min, max, n = 5) {
   if (min === max) { min -= 1; max += 1; }
   const raw = (max - min) / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
-  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw);
+  const step = [1, 2, 5, 10].map(m => m * mag).find(s => s >= raw);
   const lo = Math.floor(min / step) * step, hi = Math.ceil(max / step) * step, t = [];
   for (let v = lo; v <= hi + step / 2; v += step) t.push(+v.toFixed(10));
   return t;
 }
 
+function caminhoSuave(P) {
+  const n = P.length;
+  if (n < 3) return P.map((p, i) => `${i ? "L" : "M"}${p[0]},${p[1]}`).join("");
+  const dx = [], m = [], t = new Array(n);
+  for (let i = 0; i < n - 1; i++) { dx[i] = P[i + 1][0] - P[i][0]; m[i] = (P[i + 1][1] - P[i][1]) / (dx[i] || 1); }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], s2 = a * a + b * b;
+    if (s2 > 9) { const tau = 3 / Math.sqrt(s2); t[i] = tau * a * m[i]; t[i + 1] = tau * b * m[i]; }
+  }
+  let d = `M${P[0][0]},${P[0][1]}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += `C${P[i][0] + h},${P[i][1] + t[i] * h} ${P[i + 1][0] - h},${P[i + 1][1] - t[i + 1] * h} ${P[i + 1][0]},${P[i + 1][1]}`;
+  }
+  return d;
+}
+
 let gid = 0;
 function chart(el, series, o = {}) {
-  const { height = 300, yFmt = v => fmt(v, 1), spark = false, zero = false, refLine = null, markers = [] } = o;
+  const { height = 300, yFmt = v => fmt(v, 1), spark = false, zero = false, refLine = null, markers = [], futuro = null } = o;
   el.innerHTML = "";
   el.classList.toggle("anim", ANIMAR);
   const W = el.clientWidth || 600, H = height;
@@ -520,8 +563,19 @@ function chart(el, series, o = {}) {
   let h = "";
 
   if (!spark) {
+    if (futuro != null) {
+      // zona da previsão: hachura discreta + linha "Hoje"
+      const xf = X(futuro), id = "h" + (++gid);
+      h += `<defs><pattern id="${id}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(255,255,255,.045)" stroke-width="3"/></pattern></defs>`;
+      h += `<rect x="${xf}" y="${m.t}" width="${W - m.r - xf}" height="${H - m.t - m.b}" fill="url(#${id})"/>`;
+      h += `<line x1="${xf}" x2="${xf}" y1="${m.t - 2}" y2="${H - m.b}" stroke="#5a5a5a" stroke-dasharray="3 4"/>`;
+      h += `<rect x="${xf - 22}" y="${m.t - 4}" width="44" height="18" rx="9" fill="#f5f5f5"/>
+            <text class="futuro-rotulo" x="${xf}" y="${m.t + 9}" text-anchor="middle" fill="#000">Hoje</text>`;
+      h += `<text class="futuro-rotulo" x="${xf + 10}" y="${H - m.b - 10}" fill="#6f6f6f">Previsão</text>`;
+    }
     ticks.forEach(t => {
-      h += `<line class="grid-line" x1="${m.l}" x2="${W - m.r}" y1="${Y(t)}" y2="${Y(t)}"/>`;
+      h += `<line class="grid-line${t === 0 ? " zero" : ""}" x1="${m.l}" x2="${W - m.r}" y1="${Y(t)}" y2="${Y(t)}"/>`;
       h += `<text class="axis" x="${m.l - 12}" y="${Y(t) + 4}" text-anchor="end">${yFmt(t)}</text>`;
     });
     const meses = Math.max(1, Math.round((x1 - x0) / (30.4 * DIA)));
@@ -534,8 +588,8 @@ function chart(el, series, o = {}) {
   series.forEach((s, si) => {
     if (!s.data.length) return;
     if (s.type === "band") {
-      const sup = s.data.map(([t, , hi], i) => `${i ? "L" : "M"}${X(t)},${Y(hi)}`).join("");
-      const inf = [...s.data].reverse().map(([t, lo]) => `L${X(t)},${Y(lo)}`).join("");
+      const sup = caminhoSuave(s.data.map(([t, , hi]) => [X(t), Y(hi)]));
+      const inf = caminhoSuave([...s.data].reverse().map(([t, lo]) => [X(t), Y(lo)])).replace(/^M/, "L");
       h += `<path class="fade" d="${sup}${inf}Z" fill="${s.color}" fill-opacity="${s.opacity ?? .25}"/>`;
       return;
     }
@@ -557,18 +611,23 @@ function chart(el, series, o = {}) {
       return;
     }
     let d = "";
-    s.data.forEach(([t, v], i) => {
-      if (i === 0) d += `M${X(t)},${Y(v)}`;
-      else if (s.type === "step") d += `H${X(t)}V${Y(v)}`;
-      else d += `L${X(t)},${Y(v)}`;
-    });
+    if (s.type !== "step" && s.data.length <= 160 && s.suave !== false) {
+      d = caminhoSuave(s.data.map(([t, v]) => [X(t), Y(v)]));
+    } else {
+      s.data.forEach(([t, v], i) => {
+        if (i === 0) d += `M${X(t)},${Y(v)}`;
+        else if (s.type === "step") d += `H${X(t)}V${Y(v)}`;
+        else d += `L${X(t)},${Y(v)}`;
+      });
+    }
     if (s.fill) {
       const id = "g" + (++gid);
       h += `<defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${s.fill}" stop-opacity="${spark ? .35 : .28}"/>
             <stop offset="1" stop-color="${s.fill}" stop-opacity="0"/></linearGradient></defs>`;
       h += `<path class="fade" d="${d}V${H - m.b}H${X(s.data[0][0])}Z" fill="url(#${id})"/>`;
     }
-    const traco = s.dash ? `class="fade" stroke-dasharray="${s.dash}"` : `class="draw" pathLength="1"`;
+    const brilho = s.brilho && !spark ? " brilho" : "";
+    const traco = s.dash ? `class="fade${brilho}" stroke-dasharray="${s.dash}"` : `class="draw${brilho}" pathLength="1"`;
     h += `<path ${traco} d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width || (spark ? 2.2 : 2.6)}"
           stroke-linejoin="round" stroke-linecap="round"/>`;
   });
@@ -611,7 +670,7 @@ function chart(el, series, o = {}) {
   guia.setAttribute("y1", m.t); guia.setAttribute("y2", H - m.b); guia.style.opacity = 0; svg.appendChild(guia);
   const pontos = series.map(s => {
     const c = document.createElementNS(ns, "circle");
-    c.setAttribute("r", 5); c.setAttribute("fill", s.color); c.setAttribute("stroke", "#000"); c.setAttribute("stroke-width", 2.5);
+    c.setAttribute("r", 5.5); c.setAttribute("fill", s.color); c.setAttribute("stroke", "#0c0c0c"); c.setAttribute("stroke-width", 3);
     c.style.opacity = 0; svg.appendChild(c); return c;
   });
   const tip = document.createElement("div"); tip.className = "tip"; el.appendChild(tip);
@@ -745,7 +804,7 @@ function renderGraficos() {
     label: `Copom: ${c.variacao > 0 ? "alta" : "corte"} de ${fmt(Math.abs(c.variacao))} p.p.`,
   }));
   chart($("c-juros"), [
-    { name: "Selic meta", color: COR.y, type: "step", data: recorte(selic), tipFmt: pct, endLabel: v => fmt(v) + "%" },
+    { name: "Selic meta", color: COR.y, type: "step", brilho: true, data: recorte(selic), tipFmt: pct, endLabel: v => fmt(v) + "%" },
     { name: "IPCA 12m", color: COR.w, data: recorte(serie(s.ipca, 2)), tipFmt: pct, endLabel: v => fmt(v) + "%" },
     { name: "Juro real", color: COR.b, data: recorte(serie(s.juro_real)), tipFmt: pct, endLabel: v => fmt(v) + "%" },
   ], { height: 340, yFmt: v => fmt(v, v % 1 ? 1 : 0) + "%", markers: marcadores });
@@ -785,7 +844,7 @@ function renderGraficos() {
   const mm = dolarTodo.map((p, i) => i < 20 ? null : [p[0], dolarTodo.slice(i - 20, i + 1).reduce((a, q) => a + q[1], 0) / 21]).filter(Boolean);
   const dolar = recorte(dolarTodo);
   chart($("c-dolar"), [
-    { name: "Dólar", color: COR.y, fill: COR.y, data: dolar, tipFmt: v => "R$ " + fmt(v, 4), endLabel: v => "R$ " + fmt(v, 2) },
+    { name: "Dólar", color: COR.y, fill: COR.y, brilho: true, data: dolar, tipFmt: v => "R$ " + fmt(v, 4), endLabel: v => "R$ " + fmt(v, 2) },
     { name: "Média 21d", color: "#cfcfcf", dash: "5 5", width: 1.6, data: recorte(mm), tipFmt: v => "R$ " + fmt(v, 4) },
   ], { height: 320, yFmt: v => "R$ " + fmt(v, 2) });
   if (dolar.length) {
@@ -844,6 +903,18 @@ const pctRel = r => {
 };
 const pct0 = v => v == null ? "—" : fmt(v * 100, 0) + "%";
 
+function regua(el, p, fmtv) {
+  if (p.li95 == null) { el.innerHTML = ""; return; }
+  const vals = [p.li95, p.ls95, p.previsto, p.focus].filter(v => v != null);
+  const lo = Math.min(...vals), hi = Math.max(...vals), folga = (hi - lo) * .08 || 1;
+  const a = lo - folga, b = hi + folga, pos = v => ((v - a) / (b - a) * 100).toFixed(2) + "%";
+  const larg = (x, y) => `left:${pos(x)};width:calc(${pos(y)} - ${pos(x)})`;
+  el.innerHTML = `<div class="trilho"></div><div class="f95" style="${larg(p.li95, p.ls95)}"></div>
+    <div class="f80" style="${larg(p.li80, p.ls80)}"></div>
+    ${p.focus != null ? `<div class="mercado" style="left:${pos(p.focus)}" title="Focus ${fmtv(p.focus)}"></div>` : ""}
+    <div class="ponto" style="left:${pos(p.previsto)}" title="Previsto ${fmtv(p.previsto)}"></div>`;
+}
+
 function renderPrevisoes() {
   const P = PREV;
   if (!P || !P.ipca) return;
@@ -856,12 +927,15 @@ function renderPrevisoes() {
   contar($("kp1"), p1.previsto, 2, "", "<small>%</small>");
   $("kp1-sub").innerHTML = (p1.li80 != null ? `Faixa 80%: <b>${fmt(p1.li80)}% a ${fmt(p1.ls80)}%</b>` : "Faixa ainda sem calibração")
     + (p1.focus != null ? ` · Focus: <b>${fmt(p1.focus)}%</b>` : "");
+  regua($("kp1-regua"), p1, v => fmt(v) + "%");
   const a = ip.acumulado_12m[ip.acumulado_12m.length - 1];
+  regua($("kp2-regua"), a, v => fmt(v) + "%");
   $("kp2-rot").textContent = `IPCA 12 meses até ${mesNome(a.alvo)}`;
   contar($("kp2"), a.previsto, 2, "", "<small>%</small>");
   $("kp2-sub").innerHTML = (a.li80 != null ? `Faixa 80%: <b>${fmt(a.li80)}% a ${fmt(a.ls80)}%</b>` : "")
     + (a.focus != null ? ` · Focus: <b>${fmt(a.focus)}%</b>` : "");
   const d21 = ca.previsoes[ca.previsoes.length - 1];
+  regua($("kp3-regua"), d21, v => "R$ " + fmt(v, 2));
   contar($("kp3"), d21.previsto, 4, '<small style="margin:0 5px 0 0">R$</small>');
   $("kp3-sub").innerHTML = `Faixa 80%: <b>R$ ${fmt(d21.li80, 2)} a R$ ${fmt(d21.ls80, 2)}</b> · igual à última cotação`;
 
@@ -879,9 +953,9 @@ function renderPrevisoes() {
     { name: "Faixa 95%", type: "band", color: COR.y, opacity: .14, data: faixa(95), tipFmt: pct },
     { name: "Faixa 80%", type: "band", color: COR.y, opacity: .30, data: faixa(80), tipFmt: pct },
     { name: "Realizado", color: COR.w, data: hist, exato: true, tipFmt: pct },
-    { name: "Previsão", color: COR.y, dash: "6 5", width: 2.6, data: [ult, ...prev], exato: true, semTipEm: ult[0], tipFmt: pct },
+    { name: "Previsão", color: COR.y, dash: "6 5", width: 2.8, brilho: true, data: [ult, ...prev], exato: true, semTipEm: ult[0], tipFmt: pct },
     { name: "Focus", type: "pontos", color: COR.b, data: ip.previsoes.filter(p => p.focus != null).map(p => [t(p.alvo), p.focus]), exato: true, tipFmt: pct },
-  ], { height: 320, yFmt: v => fmt(v, 1) + "%", zero: true, mensal: true, eixoTooltip: [...hist, ...prev] });
+  ], { height: 340, yFmt: v => fmt(v, 1) + "%", zero: true, mensal: true, eixoTooltip: [...hist, ...prev], futuro: ult[0] });
 
   const rotFocus = { "melhor que a referência": "modelo melhor", "pior que a referência": "Focus melhor", "sem diferença significativa": "empate estatístico" };
   const rotMedia = { "melhor que a referência": "melhor", "pior que a referência": "pior", "sem diferença significativa": "empate estatístico" };
@@ -900,9 +974,9 @@ function renderPrevisoes() {
   chart($("c-prev-dolar"), [
     { name: "Faixa 95%", type: "band", color: COR.y, opacity: .14, data: faixaD(95), tipFmt: rs },
     { name: "Faixa 80%", type: "band", color: COR.y, opacity: .30, data: faixaD(80), tipFmt: rs },
-    { name: "Cotação", color: COR.y, data: histD, exato: true, tipFmt: rs },
+    { name: "Cotação", color: COR.y, brilho: true, data: histD, exato: true, tipFmt: rs },
     { name: "Previsão", color: COR.y, dash: "6 5", data: prevD, exato: true, semTipEm: uD[0], tipFmt: rs },
-  ], { height: 300, yFmt: v => "R$ " + fmt(v, 2), eixoTooltip: [...histD, ...prevD.slice(1)] });
+  ], { height: 320, yFmt: v => "R$ " + fmt(v, 2), eixoTooltip: [...histD, ...prevD.slice(1)], futuro: uD[0] });
 
   const rotArima = { "melhor que a referência": "superou", "pior que a referência": "pior", "sem diferença significativa": "não superou" };
   const porH = Object.fromEntries(ca.previsoes.map(p => [p.h, p]));
