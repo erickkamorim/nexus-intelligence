@@ -788,7 +788,7 @@ function textoResumo(r, ciclo) {
 function renderVisao() {
   const r = DADOS.resumo, s = DADOS.series, ciclo = cicloAtual();
   if (r.selic) {
-    contar($("h-valor"), r.selic.valor, 2, "", "<small>% ao ano</small>");
+    contar($("h-valor"), r.selic.valor, 2, "", "<small>% a.a.</small>");
     $("h-tag").textContent = r.copom ? `Copom · ${dataBR(parse(r.copom.data))}` : "Banco Central";
     $("h-texto").innerHTML = textoResumo(r, ciclo);
     $("sub-data").textContent = `Dados oficiais do Banco Central atualizados até ${dataBR(parse(r.selic.data))}`;
