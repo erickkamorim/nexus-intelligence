@@ -1,0 +1,2 @@
+tem comparador: True agenda visível: True placar visível: True
+erros: []
