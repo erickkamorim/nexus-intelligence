@@ -4,3 +4,5 @@ logs/
 data/*.csv
 .env
 site/
+data/amostras/
+data/backtest/
