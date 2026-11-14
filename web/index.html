@@ -311,7 +311,7 @@
   }
 </style>
 </head>
-<body>
+<body class="recolhido">
 
 <!-- Ícones desenhados -->
 <svg width="0" height="0" style="position:absolute">
@@ -1131,7 +1131,10 @@ function aplicarRecolhido(recolhido, animar) {
   // os gráficos medem a largura: redesenha depois da transição
   setTimeout(() => window.dispatchEvent(new Event("resize")), animar ? 300 : 0);
 }
-try { aplicarRecolhido(localStorage.getItem("nexus-menu") === "recolhido", false); } catch (e) { /* sem armazenamento */ }
+// O menu começa recolhido; só abre sozinho se a pessoa já tiver escolhido deixá-lo aberto.
+let menuSalvo = null;
+try { menuSalvo = localStorage.getItem("nexus-menu"); } catch (e) { /* sem armazenamento */ }
+aplicarRecolhido(menuSalvo !== "aberto", false);
 $("recolher").addEventListener("click", () => {
   const recolhido = !document.body.classList.contains("recolhido");
   aplicarRecolhido(recolhido, true);
