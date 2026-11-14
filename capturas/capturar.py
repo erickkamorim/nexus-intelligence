@@ -1,38 +1,39 @@
-# Teste no celular: o menu flutuante acompanha a rolagem e cabe na tela?
-import asyncio
+import asyncio, json
 from playwright.async_api import async_playwright
-BASE = "https://erickkamorim.github.io/nexus-intelligence/"
 OUT = "capturas/out/"
-async def rodar(p, b, html, rotulo):
-    ctx = await b.new_context(**p.devices["iPhone 13"])
-    pg = await ctx.new_page()
-    if html:
-        for u in (BASE, BASE + "index.html"):
-            await pg.route(u, lambda r: r.fulfill(body=html, content_type="text/html; charset=utf-8"))
-    await pg.goto(BASE, wait_until="networkidle"); await pg.wait_for_timeout(3500)
-    alt = await pg.evaluate("document.body.scrollHeight")
-    for i, y in enumerate([0, 0.2, 0.4, 0.6, 0.8, 1.0]):
-        await pg.evaluate(f"window.scrollTo(0, {int(alt*y)})"); await pg.wait_for_timeout(900)
-        r = await pg.evaluate("""() => {
-          const a = document.querySelector('aside').getBoundingClientRect();
-          const on = document.querySelector('#menu a.on');
-          return {aside: [Math.round(a.left), Math.round(a.right), Math.round(a.top), Math.round(a.bottom)],
-                  tela: [innerWidth, innerHeight], ativo: on ? on.getAttribute('href') : null,
-                  status_visivel: getComputedStyle(document.querySelector('.side-status')).display};
-        }""")
-        print(rotulo, y, r, flush=True)
-        await pg.screenshot(path=f"{OUT}{rotulo}_mob_{i}.png")
-    # clicar no menu
-    for sec in ["juros", "cambio", "dados"]:
-        await pg.click(f'#menu a[href="#{sec}"]'); await pg.wait_for_timeout(1500)
-        r = await pg.evaluate("s => [Math.round(document.querySelector('#'+s+' .sec-title').getBoundingClientRect().top), document.querySelector('#menu a.on')?.getAttribute('href')]", sec)
-        print(rotulo, "clique", sec, r, flush=True)
-    await ctx.close()
 async def main():
-    html = open("capturas/teste_index.html", encoding="utf-8").read()
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        await rodar(p, b, None, "antes")
-        await rodar(p, b, html, "depois")
+        for nome, kw in [("d", dict(viewport={"width": 1440, "height": 900}, device_scale_factor=1)),
+                         ("m", dict(**p.devices["iPhone 13"]))]:
+            ctx = await b.new_context(**kw, accept_downloads=True, timezone_id="America/Sao_Paulo")
+            pg = await ctx.new_page()
+            erros = []
+            pg.on("pageerror", lambda e: erros.append(str(e)))
+            pg.on("console", lambda m: m.type == "error" and erros.append(m.text))
+            await pg.goto("http://localhost:8000/", wait_until="networkidle"); await pg.wait_for_timeout(3000)
+            await pg.evaluate("document.querySelectorAll('.reveal').forEach(e => e.classList.add('in'))")
+            print(nome, "erros:", erros)
+            for sel, arq in [("#visao", "visao"), ("#comparar", "comparar"), ("#placar", "placar")]:
+                e = await pg.query_selector(sel)
+                await e.scroll_into_view_if_needed(); await pg.wait_for_timeout(1800)
+                await e.screenshot(path=f"{OUT}{nome}_{arq}.png")
+            if nome == "d":
+                # modo R$ 100, seleção e CSV
+                await pg.click('#cmp-modo button[data-modo="base100"]'); await pg.wait_for_timeout(1800)
+                e = await pg.query_selector("#comparar"); await e.screenshot(path=f"{OUT}d_comparar_r100.png")
+                async with pg.expect_download() as dl:
+                    await pg.click("#cmp-csv")
+                d = await dl.value; await d.save_as(OUT + "teste.csv"); print("csv:", d.suggested_filename)
+                await pg.click('#cmp-series .cmp-chip[data-id="dolar"]'); await pg.wait_for_timeout(600)
+                await pg.select_option("#cmp-de", index=0); await pg.wait_for_timeout(800)
+                e = await pg.query_selector("#comparar"); await e.screenshot(path=f"{OUT}d_comparar_r100b.png")
+                print("menu itens:", await pg.evaluate("[...document.querySelectorAll('#menu a')].length"))
+            else:
+                a = await pg.evaluate("(() => { const r = document.querySelector('aside').getBoundingClientRect(); return [r.left, r.right, innerWidth]; })()")
+                print("menu celular:", a, "rolagem lateral:", await pg.evaluate("document.documentElement.scrollWidth"))
+                await pg.screenshot(path=f"{OUT}m_menu.png")
+            print(nome, "erros finais:", erros)
+            await ctx.close()
         await b.close()
 asyncio.run(main())

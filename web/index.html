@@ -144,6 +144,8 @@
 
   /* ---------- Seções ---------- */
   section { padding-top: 38px; }
+  /* ao clicar no menu, o título da seção para logo abaixo da faixa congelada (38px = padding-top da seção) */
+  section[id]:not(#visao) { scroll-margin-top: max(0px, calc(var(--faixa-h, 0px) - 22px)); }
   .sec-title { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
   .sec-title h2 { font-family: var(--wide); font-size: 21px; font-weight: 700; }
   .sec-title p { color: var(--muted); font-size: 13px; }
@@ -245,6 +247,55 @@
   .kpi-sub { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
   .kpi-sub b { color: var(--text); font-weight: 600; }
 
+  /* Agenda */
+  .agenda { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+  .ag { display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, .03); border: 1px solid var(--line);
+        border-radius: 18px; padding: 12px 14px; min-width: 0; }
+  .ag .ico { width: 34px; height: 34px; border-radius: 11px; }
+  .ag small { display: block; color: var(--muted); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; }
+  .ag b { display: block; font-family: var(--wide); font-size: 14px; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag span.q { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .ag .falta { margin-left: auto; flex: none; background: var(--card-2); color: var(--text); border-radius: 999px; padding: 5px 10px;
+               font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .ag .falta.hoje { background: var(--yellow); color: #000; }
+
+  /* Comparador */
+  .cmp-controles { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-bottom: 14px; }
+  .cmp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cmp-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--card-2); border: 1px solid var(--line); color: var(--muted);
+              font: 600 13px var(--body); padding: 8px 14px; border-radius: 999px; cursor: pointer; transition: color .2s, border-color .2s, background .2s; }
+  .cmp-chip i { width: 10px; height: 10px; border-radius: 50%; background: #444; transition: background .2s; }
+  .cmp-chip[aria-pressed="true"] { color: var(--text); border-color: #3a3a3a; background: #1c1c1c; }
+  .cmp-chip[aria-pressed="true"] i { background: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent); }
+  .cmp-chip:hover { color: var(--text); }
+  .cmp-periodo { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-wrap: wrap; }
+  .cmp-periodo label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+  .cmp-periodo select { background: var(--card-2); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px;
+                        font: 600 13px var(--body); color-scheme: dark; }
+  .cmp-atalhos { display: inline-flex; gap: 4px; }
+  .cmp-atalhos button { background: none; border: 1px solid var(--line); color: var(--muted); font: 600 12px var(--body); border-radius: 999px;
+                        padding: 6px 11px; cursor: pointer; }
+  .cmp-atalhos button:hover, .cmp-atalhos button.on { color: #000; background: var(--yellow); border-color: var(--yellow); }
+  #cmp-explica { margin: 0 0 12px; }
+  .cmp-rodape { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+  .cmp-rodape .nota { flex: 1; min-width: 240px; }
+  .btn-csv { display: inline-flex; align-items: center; gap: 8px; background: var(--yellow); color: #000; border: 0; border-radius: 999px;
+             font: 700 13px var(--body); padding: 10px 16px; cursor: pointer; }
+  .btn-csv svg { width: 16px; height: 16px; stroke-width: 2.4; }
+  .btn-csv:hover { filter: brightness(1.08); }
+
+  /* Placar */
+  .placar-stats { margin-top: 0; margin-bottom: 18px; }
+  .placar-stats .stat small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+  .placar-vazio { display: flex; gap: 14px; align-items: flex-start; background: rgba(255, 255, 255, .03); border: 1px dashed #333;
+                  border-radius: 20px; padding: 16px 18px; font-size: 14px; line-height: 1.55; color: #cfcfcf; }
+  .placar-vazio b { color: var(--text); }
+  .placar h4 { font-family: var(--wide); font-size: 13.5px; font-weight: 600; margin: 22px 0 4px; }
+  .placar .hint + table { margin-top: 10px; }
+  .placar td .mini { display: block; color: var(--muted); font-size: 11.5px; }
+  .placar td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tabela-rolavel { overflow-x: auto; }
+
   .erro { border-color: rgba(255,107,90,.4); display: none; margin-bottom: 18px; }
   code { background: var(--card-2); padding: 2px 7px; border-radius: 7px; font-size: 12px; }
 
@@ -257,6 +308,8 @@
     .overview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .two { grid-template-columns: 1fr; }
     .stats { grid-template-columns: repeat(2, 1fr); }
+    .agenda { grid-template-columns: 1fr; }
+    .cmp-periodo { margin-left: 0; }
   }
   /* Faixa congelada (como "congelar painéis" no Excel): aparece com o período "Tudo"
      quando a visão geral sai da tela, mantendo PTAX, indicadores e período sempre à vista */
@@ -312,9 +365,10 @@
     aside { inset: auto 50% 18px auto; transform: translateX(50%); width: auto; height: auto; padding: 7px;
             flex-direction: row; border: 1px solid var(--line); border-radius: 999px;
             background: rgba(13,13,13,.9); backdrop-filter: blur(14px); box-shadow: 0 18px 50px rgba(0,0,0,.6); }
-    .brand, .menu-label, .side-status, .menu a span, .recolher { display: none; }
+    .brand, .menu-label, .side-status, .menu a span, .recolher,
+    body.recolhido .side-status { display: none; }   /* o menu recolhido do computador não vale no celular */
     .menu { flex-direction: row; gap: 2px; }
-    .menu a { padding: 11px 12px; }
+    .menu a, body.recolhido .menu a { padding: 11px 10px; }
     aside { max-width: calc(100vw - 20px); }
     main { margin-left: 0; padding: 22px 16px 120px; }
     .overview { grid-template-columns: 1fr 1fr; }
@@ -354,6 +408,11 @@
     <symbol id="i-cycle" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
     <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
     <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></symbol>
+    <symbol id="i-compare" viewBox="0 0 24 24"><path d="M3 17c3-6 6-9 9-9s5 2 9 0"/><path d="M3 9c4 2 6 4 9 4s5-3 9-8"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
     <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
     <symbol id="i-up" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M7 7l10 10M17 9v8H9"/></symbol>
@@ -375,6 +434,7 @@
     <a href="#juros" title="Juros"><svg class="i"><use href="#i-percent"/></svg><span>Juros</span></a>
     <a href="#inflacao" title="Inflação"><svg class="i"><use href="#i-cart"/></svg><span>Inflação</span></a>
     <a href="#cambio" title="Câmbio"><svg class="i"><use href="#i-dollar"/></svg><span>Câmbio</span></a>
+    <a href="#comparar" title="Comparar"><svg class="i"><use href="#i-compare"/></svg><span>Comparar</span></a>
     <a href="#previsoes" id="menu-previsoes" hidden title="Previsões"><svg class="i"><use href="#i-trend"/></svg><span>Previsões</span></a>
     <a href="#dados" title="Qualidade"><svg class="i"><use href="#i-db"/></svg><span>Qualidade</span></a>
     <a href="metodologia.html" title="Metodologia"><svg class="i"><use href="#i-book"/></svg><span>Metodologia</span></a>
@@ -462,6 +522,7 @@
       </div>
     </div>
     <p class="resumo" id="h-texto">&nbsp;</p>
+    <div class="agenda" id="agenda" hidden aria-label="Próximos eventos"></div>
   </div>
 
   <section id="juros">
@@ -512,6 +573,35 @@
       </div>
       <div class="chart" id="c-dolar"></div>
       <div class="stats" id="dolar-stats"></div>
+    </div>
+  </section>
+
+  <section id="comparar">
+    <div class="sec-title"><span class="ico"><svg class="i"><use href="#i-compare"/></svg></span>
+      <div><h2>Comparador</h2><p>Escolha os indicadores e o período</p></div></div>
+    <div class="card reveal">
+      <div class="cmp-controles">
+        <div class="seg seg-cmp" id="cmp-modo" role="tablist" aria-label="Tipo de comparação">
+          <span class="pill"></span>
+          <button data-modo="taxas" class="on">Taxas em %</button>
+          <button data-modo="base100">R$ 100 no início</button>
+        </div>
+        <div class="cmp-chips" id="cmp-series" aria-label="Indicadores"></div>
+        <div class="cmp-periodo">
+          <label>De <select id="cmp-de"></select></label>
+          <label>Até <select id="cmp-ate"></select></label>
+          <div class="cmp-atalhos" id="cmp-atalhos">
+            <button data-m="12">1A</button><button data-m="24">2A</button><button data-m="0">Tudo</button>
+          </div>
+        </div>
+      </div>
+      <p class="hint" id="cmp-explica"></p>
+      <div class="chart" id="c-cmp"></div>
+      <div class="stats" id="cmp-stats"></div>
+      <div class="cmp-rodape">
+        <p class="nota" id="cmp-nota" style="margin-top:0"></p>
+        <button class="btn-csv" id="cmp-csv" type="button"><svg class="i"><use href="#i-download"/></svg>Baixar CSV</button>
+      </div>
     </div>
   </section>
 
@@ -572,6 +662,16 @@
         <table class="tabela-prev"><thead><tr><th>Horizonte</th><th>Faixa 80%</th><th>Erro típico no backtest</th><th>Faixas acertaram (80% · 95%)</th><th>Melhor modelo testado (ARIMA)</th></tr></thead>
           <tbody id="t-prev-dolar"></tbody></table>
       </div>
+    </div>
+    <div class="card reveal placar" id="placar" hidden>
+      <div class="card-head">
+        <div><h3>Placar ao vivo</h3><p class="hint">As previsões que o NEXUS publicou, com data, comparadas ao dado oficial que saiu depois. O backtest simula o passado; aqui nada pode ser ajustado depois.</p></div>
+        <div class="legend"><span><i class="mk" style="background:var(--yellow)"></i>NEXUS</span><span><i class="mk" style="background:var(--blue)"></i>Focus</span><span><i class="mk" style="background:#f5f5f5"></i>Realizado</span></div>
+      </div>
+      <div class="stats placar-stats" id="placar-stats"></div>
+      <div class="placar-vazio" id="placar-vazio" hidden></div>
+      <div id="placar-ipca"></div>
+      <div id="placar-dolar"></div>
     </div>
     <p class="nota" id="prev-nota"></p>
   </section>
@@ -1117,6 +1217,311 @@ function renderPrevisoes() {
     + `<a href="metodologia.html">Como isso foi feito →</a>`;
 }
 
+/* ================= Agenda ================= */
+// "Hoje" sempre no horário de Brasília, para a agenda não errar o dia para quem está em outro fuso
+const agoraBR = () => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit",
+    day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23", weekday: "short" }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  return { iso: `${p.year}-${p.month}-${p.day}`, hora: Number(p.hour) + Number(p.minute) / 60 };
+};
+const diasEntre = (a, b) => Math.round((parse(b) - parse(a)) / DIA);
+const quandoFalta = n => n <= 0 ? "hoje" : n === 1 ? "amanhã" : `em ${n} dias`;
+const ddmm = iso => parse(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+const SEMANA = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+let AGENDA = null;
+
+function proximaAtualizacao(hoje) {
+  // o workflow roda em dias úteis às 19h de Brasília
+  const d = parse(hoje.iso);
+  if (d.getDay() >= 1 && d.getDay() <= 5 && hoje.hora < 19) return hoje.iso;
+  do d.setDate(d.getDate() + 1); while (d.getDay() === 0 || d.getDay() === 6);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function renderAgenda() {
+  const ag = AGENDA;
+  if (!ag) return;
+  const hoje = agoraBR(), itens = [];
+  const ipca = ag.ipca.find(x => x.divulgacao >= hoje.iso);
+  if (ipca) itens.push({ ico: "i-cart", rot: "Próximo IPCA", titulo: `${ddmm(ipca.divulgacao)} · IPCA de ${MESES_LONGOS[parse(ipca.mes_referencia).getMonth()]}`,
+    q: "IBGE, às 9h", dias: diasEntre(hoje.iso, ipca.divulgacao) });
+  const copom = ag.copom.find(x => x.decisao >= hoje.iso);
+  if (copom) {
+    const andamento = copom.inicio <= hoje.iso;
+    itens.push({ ico: "i-percent", rot: "Próximo Copom", titulo: `${ddmm(copom.decisao)} · decisão da Selic`,
+      q: andamento ? "Reunião em andamento · comunicado a partir das 18h30" : `Reunião de ${ddmm(copom.inicio)} e ${ddmm(copom.decisao)} · comunicado às 18h30`,
+      dias: diasEntre(hoje.iso, copom.decisao) });
+  }
+  const at = proximaAtualizacao(hoje), dAt = diasEntre(hoje.iso, at);
+  itens.push({ ico: "i-clock", rot: "Próxima atualização do NEXUS", titulo: `${dAt === 0 ? "Hoje" : dAt === 1 ? "Amanhã" : SEMANA[parse(at).getDay()][0].toUpperCase() + SEMANA[parse(at).getDay()].slice(1)} às 19h`,
+    q: "Coleta, previsões e placar", dias: dAt });
+  $("agenda").innerHTML = itens.map(i => `<div class="ag"><span class="ico"><svg class="i"><use href="#${i.ico}"/></svg></span>
+      <div style="min-width:0"><small>${i.rot}</small><b>${i.titulo}</b><span class="q">${i.q}</span></div>
+      <span class="falta${i.dias <= 0 ? " hoje" : ""}">${quandoFalta(i.dias)}</span></div>`).join("");
+  $("agenda").hidden = false;
+}
+
+/* ================= Placar ao vivo ================= */
+let PLACAR = null;
+
+function renderPlacar() {
+  const pl = PLACAR;
+  if (!pl || !pl.primeira_publicacao || $("previsoes").hidden) return;
+  $("placar").hidden = false;
+  const ip = pl.ipca.avaliadas, dl = pl.cambio.avaliadas, abertos = pl.ipca.em_aberto + pl.cambio.em_aberto;
+  const dentro = (r, n) => r.realizado >= r[`li${n}`] && r.realizado <= r[`ls${n}`];
+  const pctDe = (a, b) => b ? fmt(a / b * 100, 0) + "%" : "—";
+  const dataIpca = alvo => {
+    const a = AGENDA && AGENDA.ipca.find(x => x.mes_referencia === String(alvo).slice(0, 10));
+    return a ? ddmm(a.divulgacao) : null;
+  };
+  const primDolar = pl.cambio.proximo_alvo ? ddmm(pl.cambio.proximo_alvo) : null;
+  const primIpca = pl.ipca.proximo_alvo ? dataIpca(pl.ipca.proximo_alvo) : null;
+
+  // quem chegou mais perto no IPCA (empate quando a diferença some no arredondamento de 2 casas)
+  const ipcaComFocus = ip.filter(r => r.focus != null);
+  const ganhador = r => {
+    const en = Math.abs(r.previsto - r.realizado), ef = Math.abs(r.focus - r.realizado);
+    return Math.abs(en - ef) < 0.005 ? "empate" : en < ef ? "nexus" : "focus";
+  };
+  const vN = ipcaComFocus.filter(r => ganhador(r) === "nexus").length, vF = ipcaComFocus.filter(r => ganhador(r) === "focus").length;
+  const dl80 = dl.filter(r => dentro(r, 80)).length;
+  const desde = new Date(pl.primeira_publicacao);
+
+  $("placar-stats").innerHTML = `
+    <div class="stat"><span>No ar desde</span><b>${desde.toLocaleDateString("pt-BR")}</b><small>${pl.dias_publicados} ${pl.dias_publicados === 1 ? "dia" : "dias"} com previsões publicadas</small></div>
+    <div class="stat"><span>Previsões já conferidas</span><b>${ip.length + dl.length}</b><small>${abertos} aguardando o dado oficial</small></div>
+    <div class="stat"><span>Dólar dentro da faixa de 80%</span><b>${dl.length ? pctDe(dl80, dl.length) : "—"}</b><small>${dl.length ? `${dl80} de ${dl.length} · o esperado é perto de 80%` : primDolar ? `primeiro resultado em ${primDolar}` : "aguardando"}</small></div>
+    <div class="stat"><span>IPCA: NEXUS mais perto que o Focus</span><b>${ipcaComFocus.length ? `${vN} de ${ipcaComFocus.length}` : "—"}</b><small>${ipcaComFocus.length ? `Focus mais perto em ${vF}` : primIpca ? `primeiro resultado em ${primIpca}` : "aguardando"}</small></div>`;
+
+  const vazio = $("placar-vazio");
+  vazio.hidden = ip.length + dl.length > 0;
+  if (!vazio.hidden) {
+    const partes = [];
+    if (primDolar) partes.push(`o primeiro resultado do dólar sai em <b>${primDolar}</b>, com a PTAX do dia`);
+    if (primIpca) partes.push(`o do IPCA de ${MESES_LONGOS[parse(pl.ipca.proximo_alvo).getMonth()]} em <b>${primIpca}</b>, quando o IBGE divulgar`);
+    vazio.innerHTML = `<span class="ico"><svg class="i"><use href="#i-target"/></svg></span><div>O placar começou em <b>${desde.toLocaleDateString("pt-BR")}</b> e já guarda <b>${abertos} previsões</b> esperando o dado oficial. `
+      + (partes.length ? `Pelo calendário, ${partes.join(", e ")}.` : "") + ` A partir daí, cada divulgação entra aqui sozinha, na atualização automática.</div>`;
+  }
+
+  // Tabela do IPCA: uma linha por mês e horizonte
+  const mes = d => MESES_LONGOS[parse(d).getMonth()] + "/" + String(parse(d).getFullYear()).slice(2);
+  const chipMaisPerto = r => {
+    if (r.focus == null) return '<span class="chip">sem Focus</span>';
+    const g = ganhador(r);
+    return g === "empate" ? '<span class="chip">empate</span>' : g === "nexus" ? '<span class="chip good">NEXUS</span>' : '<span class="chip bad">Focus</span>';
+  };
+  $("placar-ipca").innerHTML = !ip.length ? "" : `<h4>IPCA</h4>
+    <p class="hint">Última previsão publicada antes do IBGE divulgar cada mês.${ipcaComFocus.length ? ` Erro médio: NEXUS ${fmt(ipcaComFocus.reduce((a, r) => a + Math.abs(r.previsto - r.realizado), 0) / ipcaComFocus.length)} p.p. · Focus ${fmt(ipcaComFocus.reduce((a, r) => a + Math.abs(r.focus - r.realizado), 0) / ipcaComFocus.length)} p.p.` : ""}</p>
+    <div class="tabela-rolavel"><table><thead><tr><th>Mês</th><th>Antecedência</th><th>NEXUS</th><th>Focus</th><th>Realizado</th><th>Mais perto</th><th>Na faixa de 80%</th></tr></thead><tbody>
+    ${ip.map(r => `<tr><td>${mes(r.alvo)}</td><td>${r.h} ${r.h === 1 ? "mês" : "meses"}</td>
+      <td class="num">${fmt(r.previsto)}%<span class="mini">${r.li80 != null ? `${fmt(r.li80)}% a ${fmt(r.ls80)}%` : ""}</span></td>
+      <td class="num">${r.focus != null ? fmt(r.focus) + "%" : "—"}</td><td class="num"><b>${fmt(r.realizado)}%</b></td>
+      <td>${chipMaisPerto(r)}</td>
+      <td>${r.li80 == null ? "—" : dentro(r, 80) ? '<span class="chip good">dentro</span>' : '<span class="chip bad">fora</span>'}</td></tr>`).join("")}
+    </tbody></table></div>`;
+
+  // Dólar: resumo por horizonte (são muitas previsões, uma por dia e horizonte)
+  const hs = [...new Set(dl.map(r => r.h))].sort((a, b) => a - b);
+  $("placar-dolar").innerHTML = !dl.length ? "" : `<h4>Dólar</h4>
+    <p class="hint">Uma previsão por dia e horizonte, conferida com a PTAX do dia-alvo. Mais recente: previsto R$ ${fmt(dl[0].previsto, 4)} para ${dataBR(parse(dl[0].alvo))}, realizado R$ ${fmt(dl[0].realizado, 4)}.</p>
+    <div class="tabela-rolavel"><table><thead><tr><th>Horizonte</th><th>Conferidas</th><th>Erro médio</th><th>Na faixa de 80%</th><th>Na faixa de 95%</th></tr></thead><tbody>
+    ${hs.map(h => { const g = dl.filter(r => r.h === h);
+      return `<tr><td>${h} ${h === 1 ? "dia útil" : "dias úteis"}</td><td class="num">${g.length}</td>
+        <td class="num">R$ ${fmt(g.reduce((a, r) => a + Math.abs(r.previsto - r.realizado), 0) / g.length, 4)}</td>
+        <td class="num">${pctDe(g.filter(r => dentro(r, 80)).length, g.length)}</td>
+        <td class="num">${pctDe(g.filter(r => dentro(r, 95)).length, g.length)}</td></tr>`; }).join("")}
+    </tbody></table></div>`;
+}
+
+/* ================= Comparador ================= */
+const CMP_SERIES = {
+  taxas: [
+    { id: "selic", nome: "Selic meta", cor: COR.y },
+    { id: "ipca12", nome: "IPCA 12 meses", cor: COR.w },
+    { id: "real", nome: "Juro real", cor: COR.b },
+  ],
+  base100: [
+    { id: "selic_acum", nome: "Aplicado na Selic", cor: COR.y },
+    { id: "precos", nome: "Inflação (IPCA)", cor: COR.w },
+    { id: "dolar", nome: "Convertido em dólar", cor: "#ff8fd0" },
+  ],
+};
+const CMP = { modo: "taxas", sel: { taxas: new Set(["selic", "ipca12", "real"]), base100: new Set(["selic_acum", "precos", "dolar"]) }, de: null, ate: null };
+const chaveMes = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+const fimDoMes = k => { const [a, m] = k.split("-").map(Number); return new Date(a, m, 0).getTime(); };
+const somaMes = (k, n) => { const [a, m] = k.split("-").map(Number); const d = new Date(a, m - 1 + n, 1); return chaveMes(d.getTime()); };
+
+// Séries mensais: último valor do mês (taxas e dólar) ou média do mês (Selic para o rendimento)
+function porMes(arr, como = "ultimo") {
+  const g = new Map();
+  arr.forEach(([t, v]) => { const k = chaveMes(t); if (!g.has(k)) g.set(k, []); g.get(k).push(v); });
+  return new Map([...g].map(([k, vs]) => [k, como === "media" ? vs.reduce((a, v) => a + v, 0) / vs.length : vs[vs.length - 1]]));
+}
+
+function cmpDados() {
+  const s = DADOS.series;
+  const selicD = serie(s.selic), ipcaM = porMes(serie(s.ipca, 1)), dolarM = porMes(serie(s.dolar));
+  return {
+    selicD, selicM: porMes(selicD), selicMedia: porMes(selicD, "media"), ipcaM, dolarM,
+    ipca12M: porMes(serie(s.ipca, 2)), realM: porMes(serie(s.juro_real)),
+  };
+}
+
+function cmpMeses(dd) {
+  // meses com pelo menos um dado; o fim é o último mês com dado de alguma série
+  const todos = [...new Set([...dd.selicM.keys(), ...dd.ipcaM.keys(), ...dd.dolarM.keys()])].sort();
+  return todos;
+}
+
+function cmpConstruir() {
+  const dd = cmpDados(), modo = CMP.modo, sel = CMP.sel[modo];
+  const defs = CMP_SERIES[modo].filter(d => sel.has(d.id));
+  let de = CMP.de, ate = CMP.ate;
+  const linhas = [];   // para o CSV: [mês, ...valores]
+  const series = [];
+  if (modo === "taxas") {
+    const dentro = t => { const k = chaveMes(t); return k >= de && k <= ate; };
+    const mapa = { selic: dd.selicM, ipca12: dd.ipca12M, real: dd.realM };
+    defs.forEach(d => {
+      const dados = d.id === "selic" ? dd.selicD.filter(p => dentro(p[0]))
+        : [...mapa[d.id]].filter(([k]) => k >= de && k <= ate).map(([k, v]) => [new Date(+k.slice(0, 4), +k.slice(5) - 1, 1).getTime(), v]);
+      series.push({ name: d.nome, color: d.cor, type: d.id === "selic" ? "step" : undefined, data: dados, monthly: d.id !== "selic",
+                    tipFmt: v => fmt(v) + "%", endLabel: v => fmt(v) + "%", brilho: d.id === "selic", _id: d.id });
+    });
+    for (let k = de; k <= ate; k = somaMes(k, 1)) linhas.push([k, ...defs.map(d => mapa[d.id].get(k) ?? null)]);
+  } else {
+    // R$ 100 no início do período: o mês "de" começa em 100; cada mês aplica o fator daquele mês
+    const ultimoComum = defs.map(d => ({ selic_acum: dd.selicMedia, precos: dd.ipcaM, dolar: dd.dolarM })[d.id])
+      .map(m => [...m.keys()].sort().pop()).sort()[0];
+    if (ate > ultimoComum) ate = ultimoComum;     // termina no último mês com todos os dados
+    const inicio = somaMes(de, -1);
+    const base = { dolar: dd.dolarM.get(inicio) ?? dd.dolarM.get(de) };
+    const fator = {
+      selic_acum: k => dd.selicMedia.has(k) ? Math.pow(1 + dd.selicMedia.get(k) / 100, 1 / 12) : null,
+      precos: k => dd.ipcaM.has(k) ? 1 + dd.ipcaM.get(k) / 100 : null,
+    };
+    const valores = Object.fromEntries(defs.map(d => [d.id, [[fimDoMes(inicio), 100]]]));
+    const acum = Object.fromEntries(defs.map(d => [d.id, 100]));
+    linhas.push([inicio, ...defs.map(() => 100)]);
+    for (let k = de; k <= ate; k = somaMes(k, 1)) {
+      const linha = [k];
+      defs.forEach(d => {
+        let v = null;
+        if (d.id === "dolar") v = dd.dolarM.has(k) && base.dolar ? dd.dolarM.get(k) / base.dolar * 100 : null;
+        else { const f = fator[d.id](k); if (f != null) { acum[d.id] *= f; v = acum[d.id]; } }
+        if (v != null) valores[d.id].push([fimDoMes(k), v]);
+        linha.push(v);
+      });
+      linhas.push(linha);
+    }
+    defs.forEach(d => series.push({ name: d.nome, color: d.cor, data: valores[d.id], monthly: true, brilho: d.id === "selic_acum",
+      tipFmt: v => "R$ " + fmt(v, 2), endLabel: v => "R$ " + fmt(v, 0), _id: d.id }));
+  }
+  return { defs, series, linhas, de, ate };
+}
+
+function renderComparador() {
+  if (!DADOS) return;
+  const dd = cmpDados(), meses = cmpMeses(dd);
+  if (!meses.length) return;
+  if (!CMP.de) { CMP.ate = meses[meses.length - 1]; CMP.de = meses[0]; }
+  const opcoes = meses.map(k => `<option value="${k}">${MESES[+k.slice(5) - 1]}/${k.slice(2, 4)}</option>`).join("");
+  if ($("cmp-de").options.length !== meses.length) { $("cmp-de").innerHTML = opcoes; $("cmp-ate").innerHTML = opcoes; }
+  $("cmp-de").value = CMP.de; $("cmp-ate").value = CMP.ate;
+
+  $("cmp-series").innerHTML = CMP_SERIES[CMP.modo].map(d =>
+    `<button class="cmp-chip" type="button" data-id="${d.id}" aria-pressed="${CMP.sel[CMP.modo].has(d.id)}" style="--c:${d.cor}"><i></i>${d.nome}</button>`).join("");
+  $("cmp-explica").textContent = CMP.modo === "taxas"
+    ? "Selic meta, inflação acumulada em 12 meses e juro real (a Selic descontada a inflação). As três estão em % ao ano, por isso dividem a mesma escala."
+    : "Quanto R$ 100 viraram desde o início do período: aplicados na Selic, convertidos em dólar ou corrigidos pela inflação (o que custava R$ 100 passou a custar quanto).";
+
+  const r = cmpConstruir();
+  const temSelicDiaria = CMP.modo === "taxas" && r.defs.some(d => d.id === "selic");
+  const eixo = r.series.reduce((a, s) => s.data.length > a.length ? s.data : a, []);
+  chart($("c-cmp"), r.series, {
+    height: 340, mensal: !temSelicDiaria, eixoTooltip: eixo,
+    yFmt: CMP.modo === "taxas" ? (v => fmt(v, v % 1 ? 1 : 0) + "%") : (v => "R$ " + fmt(v, 0)),
+    refLine: CMP.modo === "base100" ? { v: 100, label: "R$ 100" } : null,
+  });
+
+  // Números do período
+  const fimDe = s => s.data.length ? s.data[s.data.length - 1][1] : null, iniDe = s => s.data.length ? s.data[0][1] : null;
+  const rotMes = k => `${MESES[+k.slice(5) - 1]}/${k.slice(2, 4)}`;
+  let stats = "";
+  if (CMP.modo === "taxas") {
+    stats = r.series.map(s => { const a = iniDe(s), b = fimDe(s); if (a == null) return "";
+      const d = b - a;
+      return `<div class="stat"><span>${s.name}</span><b>${fmt(b)}%</b><span>${Math.abs(d) < 0.005 ? "estável" : `${d > 0 ? "+" : "−"}${fmt(Math.abs(d))} p.p.`} desde ${rotMes(r.de)}</span></div>`; }).join("");
+  } else {
+    stats = r.series.map(s => { const b = fimDe(s); if (b == null) return "";
+      return `<div class="stat"><span>${s.name}</span><b>R$ ${fmt(b, 2)}</b><span>${b >= 100 ? "+" : "−"}${fmt(Math.abs(b - 100), 1)}% desde ${rotMes(r.de)}</span></div>`; }).join("");
+    const sS = r.series.find(s => s._id === "selic_acum"), sP = r.series.find(s => s._id === "precos");
+    if (sS && sP && fimDe(sP)) {
+      const real = (fimDe(sS) / fimDe(sP) - 1) * 100;
+      stats += `<div class="stat"><span>Ganho real na Selic</span><b>${real > 0 ? "+" : "−"}${fmt(Math.abs(real), 1)}%</b><span>acima da inflação no período</span></div>`;
+    }
+  }
+  $("cmp-stats").innerHTML = stats;
+  $("cmp-nota").innerHTML = CMP.modo === "taxas"
+    ? `De ${rotMes(r.de)} a ${rotMes(r.ate)}. Fonte: Banco Central (SGS) e IBGE. Juro real pela fórmula de Fisher: (1 + Selic) ÷ (1 + IPCA 12 meses) − 1.`
+    : `De ${rotMes(r.de)} a ${rotMes(r.ate)}, último mês com todos os indicadores escolhidos. A Selic é acumulada mês a mês pela meta média do mês, uma aproximação: o CDI, que remunera as aplicações, fica um pouco abaixo. Dólar pela PTAX do último dia útil do mês.`;
+  CMP_ULTIMO = r;
+  $("cmp-atalhos").querySelectorAll("button").forEach(b => {
+    const m = +b.dataset.m, fim = meses[meses.length - 1];
+    const ini = m ? somaMes(fim, -(m - 1)) : meses[0];
+    b.classList.toggle("on", CMP.ate === fim && CMP.de === (ini < meses[0] ? meses[0] : ini));
+  });
+  moverPillDe($("cmp-modo"));
+}
+let CMP_ULTIMO = null;
+
+function baixarCSV() {
+  const r = CMP_ULTIMO; if (!r) return;
+  const un = CMP.modo === "taxas" ? " (% a.a.)" : " (R$, base 100)";
+  const cab = ["mes", ...r.defs.map(d => d.nome + un)].join(";");
+  const linhas = r.linhas.map(([k, ...vs]) => [k, ...vs.map(v => v == null ? "" : String(Math.round(v * 10000) / 10000).replace(".", ","))].join(";"));
+  const blob = new Blob(["﻿" + [cab, ...linhas].join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `nexus-${CMP.modo === "taxas" ? "taxas" : "r100"}-${r.de}-a-${r.ate}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function moverPillDe(segEl) {
+  const b = segEl.querySelector("button.on"), p = segEl.querySelector(".pill");
+  if (b && p) { p.style.left = b.offsetLeft + "px"; p.style.width = b.offsetWidth + "px"; }
+}
+
+$("cmp-modo").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || !DADOS || b.dataset.modo === CMP.modo) return;
+  $("cmp-modo").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  CMP.modo = b.dataset.modo;
+  // R$ 100 começa nos últimos 2 anos; taxas mostram tudo
+  const meses = cmpMeses(cmpDados()), fim = meses[meses.length - 1];
+  CMP.ate = fim; CMP.de = CMP.modo === "base100" ? (somaMes(fim, -23) < meses[0] ? meses[0] : somaMes(fim, -23)) : meses[0];
+  ANIMAR = !reduzMovimento; renderComparador();
+});
+$("cmp-series").addEventListener("click", e => {
+  const b = e.target.closest(".cmp-chip"); if (!b) return;
+  const sel = CMP.sel[CMP.modo], id = b.dataset.id;
+  if (sel.has(id)) { if (sel.size === 1) return; sel.delete(id); } else sel.add(id);   // sempre fica pelo menos um
+  ANIMAR = false; renderComparador();
+});
+["cmp-de", "cmp-ate"].forEach(id => $(id).addEventListener("change", () => {
+  let de = $("cmp-de").value, ate = $("cmp-ate").value;
+  if (de > ate) [de, ate] = id === "cmp-de" ? [de, de] : [ate, ate];
+  CMP.de = de; CMP.ate = ate; ANIMAR = false; renderComparador();
+}));
+$("cmp-atalhos").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || !DADOS) return;
+  const meses = cmpMeses(cmpDados()), fim = meses[meses.length - 1], m = +b.dataset.m;
+  CMP.ate = fim; CMP.de = m ? (somaMes(fim, -(m - 1)) < meses[0] ? meses[0] : somaMes(fim, -(m - 1))) : meses[0];
+  ANIMAR = !reduzMovimento; renderComparador();
+});
+$("cmp-csv").addEventListener("click", baixarCSV);
+
 const NOMES_MOEDAS = { USD: "Dólar americano", EUR: "Euro", GBP: "Libra esterlina", JPY: "Iene",
                        CHF: "Franco suíço", CAD: "Dólar canadense", AUD: "Dólar australiano" };
 
@@ -1154,14 +1559,17 @@ async function carregar() {
       return r.json();
     })));
     DADOS = Object.fromEntries(nomes.map((n, i) => [n, resp[i]]));
-    renderGraficos(); renderVisao(); renderQualidade();
+    renderGraficos(); renderVisao(); renderQualidade(); renderComparador();
     checarCongelado();
+    fetch("api/agenda").then(r => r.ok ? r.json() : null).then(a => { AGENDA = a; renderAgenda(); renderPlacar(); }).catch(() => {});
     // Moedas e previsões são opcionais: a página funciona sem elas
     fetch("api/moedas").then(r => r.ok ? r.json() : null).then(renderMoedas)
       .then(() => { if (congelado.classList.contains("on")) copiarParaCongelado(); }).catch(() => {});
     try {
       const r = await fetch("api/previsoes");
       if (r.ok) { PREV = await r.json(); renderPrevisoes(); }
+      const rp = await fetch("api/placar");
+      if (rp.ok) { PLACAR = await rp.json(); renderPlacar(); }
     } catch (e) { /* sem previsões publicadas */ }
   } catch (e) {
     $("erro").style.display = "block";
@@ -1224,6 +1632,11 @@ function copiarParaCongelado() {
   $("cg-ticker-faixa").innerHTML = faixa.innerHTML;
   $("cg-ticker-faixa").style.cssText = faixa.style.cssText;
   $("cg-ticker-data").textContent = $("ticker-data").textContent;
+  medirFaixa();
+}
+function medirFaixa() {
+  // altura da faixa congelada (0 no celular, onde ela não aparece) usada no scroll-margin das seções
+  document.documentElement.style.setProperty("--faixa-h", congelado.offsetHeight + "px");
 }
 function atualizarCongelado() {
   const mostrar = !!DADOS && visaoForaDaTela;
@@ -1239,7 +1652,10 @@ function checarCongelado() {
   atualizarCongelado();
 }
 window.addEventListener("scroll", checarCongelado, { passive: true });
-window.addEventListener("resize", checarCongelado);
+window.addEventListener("resize", () => { medirFaixa(); checarCongelado(); });
+// antes de pular para uma seção pelo menu, atualiza a faixa e mede a altura dela
+document.querySelectorAll('#menu a[href^="#"], .nav-mobile a[href^="#"]').forEach(a =>
+  a.addEventListener("click", () => { if (DADOS) copiarParaCongelado(); }));
 $("cg-periodo").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   const alvo = seg.querySelector(`button[data-m="${b.dataset.m}"]`); if (alvo) alvo.click();
@@ -1248,7 +1664,7 @@ $("cg-periodo").addEventListener("click", e => {
 let tResize;
 window.addEventListener("resize", () => {
   clearTimeout(tResize);
-  tResize = setTimeout(() => { if (DADOS) { ANIMAR = false; renderGraficos(); renderVisao(); renderPrevisoes(); ANIMAR = !reduzMovimento; } moverPill(); }, 150);
+  tResize = setTimeout(() => { if (DADOS) { ANIMAR = false; renderGraficos(); renderVisao(); renderPrevisoes(); renderComparador(); ANIMAR = !reduzMovimento; } moverPill(); }, 150);
 });
 
 // Cartões aparecem ao rolar
