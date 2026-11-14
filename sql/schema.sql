@@ -28,3 +28,14 @@ CREATE TABLE IF NOT EXISTS execucoes (
     registros_atualizados INTEGER,
     mensagem           TEXT
 );
+
+-- Cotações PTAX de fechamento de outras moedas (faixa de moedas no topo do dashboard)
+CREATE TABLE IF NOT EXISTS cotacoes_moedas (
+    moeda          CHAR(3)        NOT NULL,   -- código ISO (USD, EUR...)
+    data           DATE           NOT NULL,
+    compra         NUMERIC(18,6)  NOT NULL,   -- R$ por 1 unidade da moeda
+    venda          NUMERIC(18,6)  NOT NULL,
+    boletim_em     TIMESTAMPTZ    NOT NULL,   -- dataHoraCotacao do boletim de fechamento
+    coletado_em    TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (moeda, data)
+);

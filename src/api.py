@@ -75,6 +75,17 @@ def previsoes():
     return conteudo
 
 
+@app.get("/api/moedas", summary="Última PTAX de fechamento de cada moeda e variação no dia")
+def moedas():
+    try:
+        conteudo = consultar("moedas")
+    except HTTPException:
+        raise
+    except Exception as erro:  # tabela ainda não existe neste banco
+        raise HTTPException(status_code=404, detail=f"Cotações indisponíveis: {erro}") from erro
+    return conteudo
+
+
 # O dashboard (web/index.html) é servido na raiz do site
 app.mount("/", StaticFiles(directory=PASTA_WEB, html=True), name="web")
 

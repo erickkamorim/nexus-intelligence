@@ -46,6 +46,8 @@ def main():
         # Previsões só existem depois que o Forecast roda neste banco
         if conn.execute("SELECT to_regclass('previsoes_publicadas') IS NOT NULL").fetchone()[0]:
             consultas.append("previsoes")
+        if conn.execute("SELECT to_regclass('cotacoes_moedas') IS NOT NULL").fetchone()[0]:
+            consultas.append("moedas")
         for nome in consultas:
             sql = (PASTA_SQL / f"{nome}.sql").read_text(encoding="utf-8")
             linha = conn.execute(sql).fetchone()

@@ -99,6 +99,11 @@ jobs:
       - name: Carregar no PostgreSQL
         run: python src/load.py
 
+      - name: Cotações de outras moedas (PTAX)
+        id: moedas
+        continue-on-error: true
+        run: python src/moedas.py
+
       # O Forecast não derruba o dashboard: se falhar, o site sai com a última previsão publicada
       - name: Coletar dados do Forecast (PTAX, IBGE, IPCA, Focus)
         id: coleta
@@ -118,6 +123,9 @@ jobs:
         run: |
           if [ "${{ steps.coleta.outcome }}" = "failure" ]; then
             echo "::warning::Coleta do Forecast falhou: veja o passo 'Coletar dados do Forecast'"
+          fi
+          if [ "${{ steps.moedas.outcome }}" = "failure" ]; then
+            echo "::warning::Cotações das moedas não atualizadas; a faixa mostra as últimas gravadas"
           fi
           if [ "${{ steps.previsao.outcome }}" = "failure" ]; then
             echo "::warning::Previsões não atualizadas (sem backtest no banco ou erro no modelo); o site mantém a última publicada"

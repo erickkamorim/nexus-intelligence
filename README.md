@@ -283,6 +283,8 @@ O dashboard foi desenvolvido do zero em HTML, CSS e JavaScript, com gráficos em
 
 ### 🏠 Visão Geral
 
+No topo, uma **faixa com a PTAX de fechamento** de sete moedas (dólar, euro, libra, iene, franco suíço, dólar canadense e australiano) e a variação sobre o dia útil anterior. É a taxa de referência diária do Banco Central, não uma cotação em tempo real, e a faixa mostra a data do boletim.
+
 Cinco cartões com os indicadores do momento (Selic, IPCA 12 meses, dólar, juro real e ciclo do Copom) e, logo abaixo, um **resumo da conjuntura escrito automaticamente** a partir dos dados: última decisão do Copom, ciclo atual, inflação, juro real e variação do dólar.
 
 <p align="center">
