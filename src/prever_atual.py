@@ -66,7 +66,7 @@ def main():
     import psycopg
 
     agora = datetime.now(BRASILIA)
-    with psycopg.connect(DATABASE_URL) as conn:
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:  # leituras curtas, sem travas longas
         preparar_esquema(conn)
         fonte = FonteBanco(conn)
         backtest, metricas, datas_backtest = ler_backtest(conn)

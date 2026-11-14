@@ -86,7 +86,7 @@ def gravar_em_conexao_nova(cfg, referencia, parametros, previsoes, metricas) -> 
     para não depender de uma conexão que o banco possa ter encerrado por inatividade."""
     import psycopg
 
-    with psycopg.connect(DATABASE_URL) as conn:
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         return gravar(conn, cfg, referencia, parametros, previsoes, metricas)
 
 
@@ -126,9 +126,10 @@ def main():
 
     pasta = RAIZ / "data" / "backtest"
     pasta.mkdir(parents=True, exist_ok=True)
-    with psycopg.connect(DATABASE_URL) as conn:
+    # autocommit: cada leitura é uma transação curta. Uma transação aberta durante
+    # todo o backtest seguraria travas e faria a atualização diária esperar.
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         preparar_esquema(conn)
-        conn.commit()
         fonte = FonteBanco(conn, reconectar=lambda: psycopg.connect(DATABASE_URL, autocommit=True))
 
         # ---------------------------------------------------------------- IPCA

@@ -9,6 +9,9 @@ ESQUEMA = Path(__file__).resolve().parents[2] / "sql" / "forecast_schema.sql"
 
 
 def preparar_esquema(conn) -> None:
+    # O esquema é idempotente, mas recriar views e funções exige trava exclusiva.
+    # Se outra conexão estiver segurando a tabela, falha em 2 minutos em vez de esperar sem fim.
+    conn.execute("SET lock_timeout = '2min'")
     conn.execute(ESQUEMA.read_text(encoding="utf-8"))
     conn.commit()
 
