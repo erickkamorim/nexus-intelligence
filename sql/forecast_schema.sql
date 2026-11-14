@@ -288,3 +288,15 @@ BEGIN
             PRIMARY KEY (execucao_id, medida, comparacao, modelo, h);
     END IF;
 END $$;
+
+-- -----------------------------------------------------------------------------
+-- 8. Fase 4: previsões publicadas. Cada execução guarda um retrato completo
+--    (JSON) do que o dashboard mostra: assim dá para reavaliar no futuro as
+--    previsões que foram de fato publicadas em cada data.
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS previsoes_publicadas (
+    id              BIGSERIAL    PRIMARY KEY,
+    gerado_em       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    versao_codigo   VARCHAR(60),
+    conteudo        JSONB        NOT NULL
+);

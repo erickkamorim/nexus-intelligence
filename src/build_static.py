@@ -42,15 +42,24 @@ def main():
     (PASTA_SITE / "api").mkdir(parents=True)
 
     with psycopg.connect(DATABASE_URL) as conn:
-        for nome in CONSULTAS:
+        consultas = list(CONSULTAS)
+        # Previsões só existem depois que o Forecast roda neste banco
+        if conn.execute("SELECT to_regclass('previsoes_publicadas') IS NOT NULL").fetchone()[0]:
+            consultas.append("previsoes")
+        for nome in consultas:
             sql = (PASTA_SQL / f"{nome}.sql").read_text(encoding="utf-8")
-            resultado = conn.execute(sql).fetchone()[0]
+            linha = conn.execute(sql).fetchone()
+            if linha is None:
+                print(f"api/{nome}: sem dados, ignorado")
+                continue
+            resultado = linha[0]
             # Sem extensão, para a página usar o mesmo caminho da API local (api/resumo)
             destino = PASTA_SITE / "api" / nome
             destino.write_text(json.dumps(resultado, default=serializar, ensure_ascii=False), encoding="utf-8")
             print(f"api/{nome}: {destino.stat().st_size:,} bytes")
 
-    shutil.copy(PASTA_WEB / "index.html", PASTA_SITE / "index.html")
+    for pagina in PASTA_WEB.glob("*.html"):
+        shutil.copy(pagina, PASTA_SITE / pagina.name)
     (PASTA_SITE / ".nojekyll").touch()  # o GitHub Pages serve os arquivos como estão
     print(f"Site gerado em {PASTA_SITE}")
 

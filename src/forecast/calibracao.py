@@ -60,3 +60,17 @@ def calibrar(df: pd.DataFrame, modelo: str, minimo: int = 24, sufixo: str = "_ca
                 nova["ls95"] = max(nova["ls95"], nova["ls80"])
             saida.append(nova)
     return pd.DataFrame(saida)
+
+
+def ajuste_atual(passado: pd.DataFrame, nivel: int, minimo: int = 24) -> tuple[float | None, int]:
+    """Ajuste conformal para a previsão de HOJE: usa todas as previsões do backtest
+    (todas já têm valor realizado). Devolve (Q, n_escores); Q None se faltar amostra."""
+    li, ls = f"li{nivel}", f"ls{nivel}"
+    escores = np.maximum(passado[li] - passado["realizado"], passado["realizado"] - passado[ls]).dropna()
+    if len(escores) < minimo:
+        return None, len(escores)
+    return _quantil_conformal(escores.to_numpy(float), 1 - nivel / 100), len(escores)
+
+
+def aplicar_ajuste(previsto: float, li: float, ls: float, q: float) -> tuple[float, float]:
+    return min(li - q, previsto), max(ls + q, previsto)

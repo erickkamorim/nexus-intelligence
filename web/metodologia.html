@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metodologia · NEXUS Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060606; --card: #121212; --card-2: #1a1a1a; --line: #232323; --text: #f5f5f5; --muted: #8a8a8a;
+    --yellow: #ffd60a; --yellow-soft: rgba(255, 214, 10, .12); --up: #ff6b5a; --down: #3ddc97;
+    --wide: "Unbounded", "Arial Black", system-ui, sans-serif; --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.65 var(--body); -webkit-font-smoothing: antialiased; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  header { position: sticky; top: 0; z-index: 10; background: rgba(6, 6, 6, .88); backdrop-filter: blur(12px);
+           border-bottom: 1px solid var(--line); }
+  .barra { max-width: 1080px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .marca { display: flex; align-items: center; gap: 12px; color: var(--text); text-decoration: none; }
+  .logo { width: 38px; height: 38px; border-radius: 13px; background: var(--yellow); color: #000; display: grid; place-items: center; }
+  .logo svg { stroke-width: 2.4; }
+  .marca b { font-family: var(--wide); font-size: 15px; }
+  .voltar { display: inline-flex; align-items: center; gap: 8px; background: var(--yellow); color: #000; font-weight: 700;
+            font-size: 13px; padding: 10px 16px; border-radius: 999px; text-decoration: none; }
+  main { max-width: 1080px; margin: 0 auto; padding: 48px 24px 96px; display: grid; grid-template-columns: 220px 1fr; gap: 48px; }
+  nav.indice { position: sticky; top: 96px; align-self: start; display: flex; flex-direction: column; gap: 2px; }
+  nav.indice a { color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 600; padding: 8px 14px; border-radius: 999px; }
+  nav.indice a:hover { color: var(--text); background: var(--card-2); }
+  h1 { font-family: var(--wide); font-size: 34px; line-height: 1.15; letter-spacing: -.5px; }
+  .lead { color: var(--muted); font-size: 16.5px; margin: 14px 0 34px; max-width: 680px; }
+  section { padding-top: 26px; margin-bottom: 18px; }
+  h2 { font-family: var(--wide); font-size: 20px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
+  h2 .n { width: 32px; height: 32px; border-radius: 11px; background: var(--yellow-soft); color: var(--yellow);
+          display: grid; place-items: center; font-size: 13px; }
+  h3 { font-size: 15px; margin: 18px 0 6px; }
+  p { margin-bottom: 12px; color: #d9d9d9; }
+  ul { margin: 0 0 14px 20px; color: #d9d9d9; } li { margin-bottom: 6px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 26px; padding: 26px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0 16px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 0 10px 8px; }
+  td { padding: 10px; border-top: 1px solid var(--line); vertical-align: top; }
+  th:first-child, td:first-child { padding-left: 0; }
+  code { background: var(--card-2); padding: 1px 7px; border-radius: 7px; font-size: 13px; }
+  .destaque { background: var(--yellow-soft); border: 1px solid rgba(255, 214, 10, .22); border-radius: 20px; padding: 16px 18px; margin: 14px 0 18px; }
+  .ok { color: var(--down); font-weight: 600; } .ruim { color: var(--up); font-weight: 600; } .muted { color: var(--muted); }
+  .data { color: var(--muted); font-size: 12.5px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } nav.indice { display: none; } h1 { font-size: 26px; } }
+</style>
+</head>
+<body>
+<header><div class="barra">
+  <a class="marca" href="index.html"><span class="logo"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span><b>NEXUS</b></a>
+  <a class="voltar" href="index.html#previsoes"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Voltar ao dashboard</a>
+</div></header>
+
+<main>
+  <nav class="indice">
+    <a href="#principio">Princípio</a>
+    <a href="#dados">Dados e datas</a>
+    <a href="#versoes">Versões</a>
+    <a href="#modelos">Modelos</a>
+    <a href="#validacao">Validação</a>
+    <a href="#metricas">Métricas</a>
+    <a href="#intervalos">Intervalos</a>
+    <a href="#resultados">Resultados</a>
+    <a href="#limitacoes">Limitações</a>
+  </nav>
+
+  <article>
+    <h1>Como as previsões são feitas e avaliadas</h1>
+    <p class="lead">O objetivo do NEXUS Forecast não é prever melhor que todo mundo, e sim medir com honestidade quanto um modelo
+      acerta, compará-lo com alternativas simples e com o mercado, e mostrar a incerteza real.</p>
+
+    <section id="principio">
+      <h2><span class="n">1</span>Princípio</h2>
+      <p>Toda previsão avaliada no passado usa <b>apenas o que estava publicado na data em que ela teria sido feita</b>.
+        Usar um dado divulgado depois ("vazamento") faz qualquer modelo parecer melhor do que é. Por isso cada valor guarda duas datas:
+        o período a que se refere e o momento a partir do qual podia ser conhecido.</p>
+    </section>
+
+    <section id="dados">
+      <h2><span class="n">2</span>Dados e datas de divulgação</h2>
+      <table>
+        <thead><tr><th>Série</th><th>Fonte do valor</th><th>Prova da data de divulgação</th></tr></thead>
+        <tbody>
+          <tr><td>IPCA mensal</td><td>SGS 433 (Banco Central), desde 2004</td><td>Calendário oficial de divulgações do IBGE (API v3)</td></tr>
+          <tr><td>Dólar (PTAX venda)</td><td>API PTAX do Banco Central, desde 2016</td><td>Horário de cada boletim (<code>dataHoraCotacao</code>)</td></tr>
+          <tr><td>Boletim Focus (IPCA mensal)</td><td>API de Expectativas do Banco Central, desde 2010</td><td>Regra oficial: relatório semanal divulgado no primeiro dia útil seguinte</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>O calendário do IBGE só tem datas exatas a partir de dez/2016. Para os meses anteriores é usado um <b>limite superior
+          comprovado</b>: como o IPCA é publicado em ordem, um mês antigo já estava publicado quando saiu o primeiro mês posterior
+          que consta no calendário. Essa data pode ser mais tardia que a real, nunca mais cedo. Consequência: nenhum teste começa
+          antes de jan/2017.</li>
+        <li>Do Focus entram só as estatísticas que compõem o relatório semanal, comparadas sempre com o <b>mesmo mês-alvo</b>
+          e o <b>mesmo horizonte</b> da previsão do modelo. Expectativas anuais nunca são misturadas com previsões mensais.</li>
+        <li>Sem prova de data, o valor fica gravado mas <b>não entra</b> em nenhum treino ou comparação.</li>
+      </ul>
+    </section>
+
+    <section id="versoes">
+      <h2><span class="n">3</span>Versões dos dados</h2>
+      <p>As APIs devolvem apenas o valor vigente hoje. O NEXUS guarda versões a partir do início da coleta: uma revisão
+        vira uma nova linha, a anterior é preservada, e o teste de uma data passada enxerga a versão que existia naquela data.
+        Para o período anterior à coleta, assume-se que o valor vigente é igual ao publicado originalmente, uma premissa que
+        não é verificável para o passado e por isso está declarada como limitação.</p>
+    </section>
+
+    <section id="modelos">
+      <h2><span class="n">4</span>Modelos</h2>
+      <table>
+        <thead><tr><th>Série</th><th>Modelo</th><th>Papel</th></tr></thead>
+        <tbody>
+          <tr><td>IPCA</td><td>Ingênuo (repete o último mês)</td><td>Referência</td></tr>
+          <tr><td>IPCA</td><td>Sazonal ingênuo · média sazonal de 5 anos</td><td>Referências simples</td></tr>
+          <tr><td>IPCA</td><td>SARIMA(p,0,q)(P,0,Q)₁₂, ordem por AIC em 36 combinações</td><td>Modelo principal</td></tr>
+          <tr><td>IPCA</td><td>Mediana do Boletim Focus</td><td>Comparação com o mercado</td></tr>
+          <tr><td>Dólar</td><td>Passeio aleatório (amanhã = hoje)</td><td>Referência obrigatória</td></tr>
+          <tr><td>Dólar</td><td>Passeio com tendência · ARIMA(p,1,q) no log, 18 combinações</td><td>Modelos testados</td></tr>
+        </tbody>
+      </table>
+      <p>A ordem do SARIMA é escolhida <b>só com os dados disponíveis em cada data</b>, uma vez por ano de origens; os parâmetros
+        são reestimados em todas as datas. A escolha fica registrada. Nas 10 seleções, a estrutura foi estável: persistência de
+        curto prazo (AR 1) e padrão sazonal anual.</p>
+    </section>
+
+    <section id="validacao">
+      <h2><span class="n">5</span>Validação temporal</h2>
+      <ul>
+        <li><b>Origem móvel com janela crescente:</b> em cada data do passado o modelo é treinado com o que se sabia e prevê o
+          futuro; a previsão é comparada com o que aconteceu.</li>
+        <li><b>IPCA:</b> uma origem logo após cada divulgação do IBGE desde jan/2017 (119 origens), horizontes de 1 a 6 meses,
+          também para o acumulado em 12 meses.</li>
+        <li><b>Dólar:</b> 250 origens, uma a cada 5 dias úteis, horizontes de 1, 5, 10 e 21 dias úteis.</li>
+        <li><b>Defesa contra vazamento em três camadas:</b> a consulta ao banco só devolve dados publicados até a data; o motor
+          de testes confere isso de novo e interrompe se encontrar dado do futuro; o banco recusa previsões inconsistentes.</li>
+      </ul>
+    </section>
+
+    <section id="metricas">
+      <h2><span class="n">6</span>Métricas e teste estatístico</h2>
+      <ul>
+        <li><b>RMSE relativo:</b> erro do modelo ÷ erro da comparação, nas mesmas datas. Abaixo de 1, o modelo errou menos.</li>
+        <li><b>Diebold-Mariano:</b> diz se a diferença de erro é real ou pode ser sorte. Quando o horizonte é maior que o espaço
+          entre as datas, as previsões se sobrepõem e os erros ficam correlacionados; o teste usa uma variância que considera isso
+          (Newey-West) e a correção de Harvey, Leybourne e Newbold para amostras pequenas.</li>
+      </ul>
+      <div class="destaque">Simulação com dois modelos igualmente bons (2.000 repetições, nível de 5%): ignorando a sobreposição,
+        o teste "encontraria" diferença em <span class="ruim">34%</span> das vezes; com a correção, em <span class="ok">7,8%</span>
+        (60 datas) e <span class="ok">5,6%</span> (120 datas).</div>
+      <p>O texto do dashboard é gerado a partir desses testes: "melhor" ou "pior" só aparecem quando a diferença é significativa a 5%.</p>
+    </section>
+
+    <section id="intervalos">
+      <h2><span class="n">7</span>Faixas de incerteza</h2>
+      <p>Uma faixa de 80% deveria conter o valor real em cerca de 80% das vezes. Isso é medido (cobertura), não suposto.</p>
+      <ul>
+        <li><b>IPCA:</b> as faixas do SARIMA vêm de 1.000 caminhos simulados, mas cobriam só 63%–72% (80%) e 82%–87% (95%),
+          porque ignoram a incerteza dos parâmetros e as mudanças de regime. Foram então <b>calibradas</b> (método conformal,
+          Romano et al., 2019) com os erros de previsões passadas cujo valor real já estava publicado em cada data. Depois da
+          calibração: <span class="ok">82%–85%</span> e <span class="ok">95%–98%</span>.</li>
+        <li><b>Dólar:</b> as faixas do passeio aleatório vêm dos quantis dos últimos 500 erros e já estavam calibradas
+          (<span class="ok">82%</span> e <span class="ok">96%</span>).</li>
+        <li>O acumulado de 12 meses junta os meses já observados com os previstos e é calculado em cada caminho simulado, o que
+          preserva a correlação entre os meses.</li>
+      </ul>
+    </section>
+
+    <section id="resultados">
+      <h2><span class="n">8</span>Resultados</h2>
+      <p class="data">Backtest de 14/11/2026. O dashboard mostra sempre o resultado do backtest mais recente.</p>
+      <h3>IPCA: SARIMA comparado ao Focus e à média sazonal</h3>
+      <table>
+        <thead><tr><th>Horizonte</th><th>Comparado ao Focus</th><th>Comparado à média sazonal</th></tr></thead>
+        <tbody>
+          <tr><td>1 mês</td><td>+32% de erro · <span class="ruim">Focus melhor</span></td><td>−16% · <span class="ok">melhor</span></td></tr>
+          <tr><td>2 meses</td><td>+5% · empate estatístico</td><td>−10% · <span class="ok">melhor</span></td></tr>
+          <tr><td>3 meses</td><td>+4% · empate</td><td>−6% · empate</td></tr>
+          <tr><td>4 meses</td><td>+3% · empate</td><td>−5% · empate</td></tr>
+          <tr><td>5 meses</td><td>+2% · empate</td><td>−4% · empate</td></tr>
+          <tr><td>6 meses</td><td>−0,5% · empate</td><td>−5% · empate</td></tr>
+        </tbody>
+      </table>
+      <p>Leitura: no mês seguinte o mercado erra bem menos (ele usa informação que o histórico não tem, como combustíveis e o
+        IPCA-15). A partir de 2 meses, um modelo que usa apenas o histórico do IPCA <b>não se distingue estatisticamente</b> do
+        Focus. Isso <b>não</b> significa que o modelo supera o mercado.</p>
+      <h3>Dólar</h3>
+      <p>Nenhum modelo superou o passeio aleatório em nenhum horizonte (RMSE relativo do ARIMA entre 0,995 e 1,021, sem
+        diferença significativa). A melhor previsão disponível é a cotação atual, o resultado clássico para câmbio.</p>
+      <h3>Um experimento que não funcionou</h3>
+      <p>As faixas do ARIMA no câmbio ficaram largas demais (89%–91% para 80%), porque o modelo supõe volatilidade constante e a
+        estima com todo o histórico desde 2016, incluindo 2020. A calibração não corrigiu: com poucos erros no início, o ajuste de
+        95% usa praticamente o maior erro já visto, e a volatilidade muda ao longo do tempo. Como o ARIMA não supera o passeio
+        aleatório, o dashboard usa o passeio aleatório. Uma calibração com janela móvel é o caminho para uma versão futura.</p>
+    </section>
+
+    <section id="limitacoes">
+      <h2><span class="n">9</span>Limitações</h2>
+      <ul>
+        <li>Os modelos usam só o histórico da própria série; o mercado tem muito mais informação.</li>
+        <li>Mudanças de regime (como a pandemia) afetam qualquer modelo estimado com o passado.</li>
+        <li>As versões dos dados só são registradas desde o início da coleta.</li>
+        <li>Para os meses de IPCA anteriores a dez/2016, a data de divulgação é um limite superior, não a data exata.</li>
+        <li>As datas futuras do dólar são aproximadas por dias úteis sem considerar feriados.</li>
+        <li>119 origens mensais é uma amostra moderada: resultados próximos do limite de significância devem ser lidos com cautela.</li>
+        <li>É um exercício estatístico com dados públicos. Não é recomendação de investimento.</li>
+      </ul>
+      <p class="muted">Código, testes e documentação técnica: <a style="color:var(--yellow)" href="https://github.com/erickkamorim/nexus-intelligence">github.com/erickkamorim/nexus-intelligence</a></p>
+    </section>
+  </article>
+</main>
+</body>
+</html>

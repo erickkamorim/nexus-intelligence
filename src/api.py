@@ -36,7 +36,8 @@ def consultar(nome: str):
     sql = (PASTA_SQL / f"{nome}.sql").read_text(encoding="utf-8")
     try:
         with psycopg.connect(DATABASE_URL, connect_timeout=5) as conn:
-            return conn.execute(sql).fetchone()[0]
+            linha = conn.execute(sql).fetchone()
+            return None if linha is None else linha[0]
     except psycopg.OperationalError as erro:
         raise HTTPException(status_code=503, detail=f"Banco de dados indisponível: {erro}") from erro
 
@@ -59,6 +60,19 @@ def copom():
 @app.get("/api/qualidade", summary="Cobertura dos dados e histórico de cargas")
 def qualidade():
     return consultar("qualidade")
+
+
+@app.get("/api/previsoes", summary="Previsões publicadas: IPCA (SARIMA calibrado e Focus) e câmbio")
+def previsoes():
+    try:
+        conteudo = consultar("previsoes")
+    except HTTPException:
+        raise
+    except Exception as erro:  # tabela ainda não existe neste banco
+        raise HTTPException(status_code=404, detail=f"Previsões indisponíveis: {erro}") from erro
+    if conteudo is None:
+        raise HTTPException(status_code=404, detail="Nenhuma previsão publicada ainda (rode src/prever_atual.py)")
+    return conteudo
 
 
 # O dashboard (web/index.html) é servido na raiz do site
