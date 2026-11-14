@@ -1,6 +1,14 @@
-# Atualiza os dados do Banco Central e publica o dashboard no GitHub Pages.
-# Roda todo dia útil às 19h (horário de Brasília), a cada envio para a branch main
-# e manualmente pela aba Actions (botão "Run workflow").
+# Atualiza os dados, gera as previsões do dia e publica o dashboard no GitHub Pages.
+#
+# Quando roda: todo dia útil às 19h (Brasília), a cada envio para a main,
+# manualmente (aba Actions > "Run workflow") e ao final de cada recalibração dos modelos.
+#
+# Cadências do NEXUS (cada uma no seu workflow):
+#   * diária   -> este arquivo: coleta, previsão de hoje e publicação
+#   * semanal  -> recalibrar-modelos.yml: backtest do câmbio
+#   * mensal   -> recalibrar-modelos.yml: backtest do IPCA e do SARIMA, depois da divulgação do IBGE
+#
+# Banco: PostgreSQL gerenciado (Neon), conexão no segredo DATABASE_URL.
 
 name: Atualizar dashboard
 
@@ -16,23 +24,21 @@ permissions:
   pages: write
   id-token: write
 
+# Um processo por vez no banco: a atualização diária espera o backtest terminar
 concurrency:
-  group: pages
+  group: nexus-banco
   cancel-in-progress: false
 
 jobs:
-  atualizar:
+  testes:
+    name: Testes
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-
     services:
       postgres:
         image: postgres:16
         env:
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: nexus_db
+          POSTGRES_DB: nexus_teste
         ports:
           - 5432:5432
         options: >-
@@ -40,20 +46,47 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nexus_db
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
+      - run: pip install -r requirements.txt
 
-      - name: Instalar dependências
-        run: pip install -r requirements.txt
+      - name: Testes Python (coleta, backtest, SARIMA, calibração)
+        run: python -m pytest -q
+
+      - name: Testes SQL (versões e datas de divulgação)
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d nexus_teste -v ON_ERROR_STOP=1 -f sql/forecast_schema.sql -f tests/sql/test_versoes.sql
+
+  atualizar:
+    name: Atualizar e publicar
+    needs: testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Conferir o segredo do banco
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Segredo DATABASE_URL não configurado (Settings > Secrets and variables > Actions)"
+            exit 1
+          fi
 
       - name: Criar tabelas
         run: |
@@ -65,19 +98,35 @@ jobs:
       - name: Carregar no PostgreSQL
         run: python src/load.py
 
+      # O Forecast não derruba o dashboard: se falhar, o site sai com a última previsão publicada
+      - name: Coletar dados do Forecast (PTAX, IBGE, IPCA, Focus)
+        id: coleta
+        continue-on-error: true
+        run: python src/coletar_forecast.py
+
+      - name: Gerar as previsões de hoje
+        id: previsao
+        continue-on-error: true
+        run: python src/prever_atual.py
+
       - name: Gerar versão estática
         run: python src/build_static.py
 
-      - name: Registro da extração
+      - name: Avisos
         if: always()
-        run: cat logs/extract.log || true
+        run: |
+          if [ "${{ steps.coleta.outcome }}" = "failure" ]; then
+            echo "::warning::Coleta do Forecast falhou: veja o passo 'Coletar dados do Forecast'"
+          fi
+          if [ "${{ steps.previsao.outcome }}" = "failure" ]; then
+            echo "::warning::Previsões não atualizadas (sem backtest no banco ou erro no modelo); o site mantém a última publicada"
+          fi
+          tail -20 logs/extract.log 2>/dev/null || true
 
       - uses: actions/configure-pages@v5
-
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
-
       - name: Publicar no GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4

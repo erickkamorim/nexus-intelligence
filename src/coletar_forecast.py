@@ -134,6 +134,10 @@ def coletar(args) -> int:
 
         # 3. IPCA
         def etapa_ipca(execucao, contexto):
+            if not divulgacoes:
+                # Sem as datas oficiais, o IPCA entraria como 'nao_verificavel' e sairia do backtest.
+                # Melhor não gravar e tentar de novo na próxima execução.
+                raise RuntimeError("Calendário do IBGE indisponível: IPCA não gravado nesta execução")
             obs = sgs.coletar_ipca(args.inicio_ipca, hoje, divulgacoes)
             contexto["lidos"] = len(obs)
             problemas = validar_serie(obs, "mensal", (-3.0, 5.0), hoje)

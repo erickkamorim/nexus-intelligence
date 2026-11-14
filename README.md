@@ -12,12 +12,15 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![statsmodels](https://img.shields.io/badge/statsmodels-4B8BBE?style=for-the-badge)
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
 
 </p>
 
 <p align="center">
   <a href="https://erickkamorim.github.io/nexus-intelligence/"><b>🔗 Acessar o dashboard online</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://erickkamorim.github.io/nexus-intelligence/metodologia.html"><b>📐 Metodologia das previsões</b></a>
 </p>
 
 > **Plataforma de inteligência econômica que coleta automaticamente indicadores oficiais do Banco Central do Brasil, valida a qualidade dos dados, armazena o histórico em PostgreSQL e apresenta as análises em um dashboard web interativo.**
@@ -33,6 +36,7 @@ Construir um produto de dados completo, da coleta à interpretação, capaz de r
 - Quanto a Selic rende acima da inflação (juro real)?
 - Como o dólar se comportou em um determinado período?
 - Os dados estão atualizados e confiáveis?
+- Um modelo estatístico consegue prever a inflação e o dólar melhor do que referências simples e do que o mercado (Boletim Focus)?
 
 Diferente de um dashboard construído sobre uma planilha estática, o NEXUS busca os dados direto da fonte oficial, garante que não haja duplicidade ou valores inválidos e pode ser atualizado a qualquer momento com um único comando.
 
@@ -51,6 +55,7 @@ O projeto cobre todas as etapas de um fluxo de dados:
 5. **Análise** com SQL usando funções de janela
 6. **Disponibilização** dos dados por uma API REST
 7. **Visualização** em um dashboard web desenvolvido do zero
+8. **Previsão** do IPCA e do dólar validada com backtest honesto (NEXUS Forecast)
 
 ---
 
@@ -64,7 +69,9 @@ O projeto cobre todas as etapas de um fluxo de dados:
 | 🧮 SQL | Indicadores derivados com funções de janela (`LAG`, `SUM OVER`, `DISTINCT ON`) |
 | ⚡ FastAPI | API REST que entrega os dados ao dashboard |
 | 🎨 HTML, CSS e JavaScript | Dashboard web com gráficos SVG feitos sem bibliotecas externas |
-| ⚙️ GitHub Actions | Atualização diária automática e publicação no GitHub Pages |
+| 📐 statsmodels e SciPy | SARIMA/ARIMA, teste de Diebold-Mariano e intervalos de previsão |
+| ☁️ Neon | PostgreSQL gerenciado na nuvem, usado pela automação |
+| ⚙️ GitHub Actions | Testes, atualização diária, recalibração dos modelos e publicação no GitHub Pages |
 
 ---
 
@@ -322,15 +329,55 @@ O dashboard fica disponível online pelo **GitHub Pages**:
 
 🔗 **https://erickkamorim.github.io/nexus-intelligence/**
 
-Um workflow do **GitHub Actions** (`.github/workflows/atualizar-dashboard.yml`) roda todo dia útil às 19h (horário de Brasília) e executa o pipeline completo em um servidor do GitHub:
+O banco de produção é um **PostgreSQL gerenciado no Neon** (região São Paulo). A conexão fica em um segredo do GitHub (`DATABASE_URL`), nunca no código. Cada tarefa roda na sua cadência:
 
-1. Sobe um PostgreSQL temporário
-2. Extrai os dados do Banco Central (`extract.py`)
-3. Valida e carrega no banco (`load.py`)
-4. Gera a versão estática do dashboard com as mesmas consultas da API (`build_static.py`)
-5. Publica a nova versão no GitHub Pages
+| Cadência | Workflow | O que faz |
+|----------|----------|-----------|
+| Todo dia útil, 19h | `atualizar-dashboard.yml` | Testes → coleta do BCB, IBGE e Focus → previsão do dia → publicação |
+| Todo sábado | `recalibrar-modelos.yml` | Backtest completo do câmbio |
+| Todo dia 15 | `recalibrar-modelos.yml` | Backtest do IPCA e do SARIMA, depois da divulgação do IBGE |
+| Mudança no código dos modelos | `recalibrar-modelos.yml` | Backtest das duas séries |
 
-Se a extração falhar, a publicação é interrompida e a versão anterior continua no ar, sem exibir dados incompletos.
+Garantias da automação:
+
+- **Nada é publicado sem os testes passarem** (72 testes em Python e testes SQL do versionamento, num PostgreSQL temporário).
+- **Se a extração do BCB falhar**, a publicação é interrompida e a versão anterior continua no ar.
+- **Se só o Forecast falhar**, o painel é publicado com a última previsão válida e o GitHub mostra um aviso.
+- **Um processo por vez no banco:** a atualização diária espera o backtest terminar.
+- Os resultados de cada backtest ficam guardados em CSV por 90 dias (artefatos do Actions).
+
+---
+
+## 🔮 8. NEXUS Forecast: previsões com validação honesta
+
+Previsão do **IPCA** (1 a 6 meses e acumulado em 12 meses) e do **dólar** (1 a 21 dias úteis). A regra do projeto: **todo modelo precisa provar, em dados que não viu, que é melhor do que uma referência simples**. Se não for, o painel diz isso. A explicação completa está na [página de Metodologia](https://erickkamorim.github.io/nexus-intelligence/metodologia.html).
+
+**Dados como eram conhecidos em cada data**
+
+- Cada valor guarda **quando ficou público**: o IPCA usa a data de divulgação do calendário oficial do IBGE, o dólar usa a hora da cotação PTAX e o Focus fica disponível no dia útil seguinte ao fechamento da semana.
+- **Revisões viram versões novas**, sem apagar a anterior (tabela `serie_versoes`, só inserção). A função `serie_conhecida_em(série, momento)` devolve o histórico exatamente como estava naquele momento.
+- Valores sem data verificável ficam fora do backtest em vez de receber uma data estimada.
+
+**Backtest com origem móvel**
+
+- IPCA: uma origem logo após cada divulgação desde 2017. Câmbio: 250 origens semanais.
+- Em cada origem o modelo só enxerga o que já tinha sido publicado. Um verificador interrompe o backtest se algum dado do futuro aparecer.
+- **As ordens do SARIMA são escolhidas de novo usando só os dados de cada origem**, não com a série inteira.
+- Comparação com o **Boletim Focus** na mesma data, mesmo mês-alvo e mesmo horizonte.
+- **Teste de Diebold-Mariano com correção para sobreposição** (horizontes maiores que o intervalo entre origens geram erros autocorrelacionados). Em simulação, o teste sem correção rejeitava a hipótese nula em ~34% das vezes, quando deveria rejeitar em 5%. Com a correção, 5,6% a 7,8%.
+- Intervalos de 80% e 95% com **cobertura medida** e calibrados apenas com erros passados já conhecidos em cada origem.
+
+**Resultados (backtest de 14/11/2026)**
+
+| Comparação | Resultado |
+|------------|-----------|
+| IPCA · SARIMA × média sazonal | **SARIMA melhor** em 1 e 2 meses (RMSE 16% e 10% menor, significativo); empate de 3 a 6 meses |
+| IPCA · SARIMA × Boletim Focus | **Focus melhor** em 1 mês (RMSE do SARIMA 32% maior); empate estatístico de 2 a 6 meses |
+| IPCA · cobertura dos intervalos | 82–85% (meta 80%) e 95–98% (meta 95%) depois da calibração |
+| Dólar · ARIMA × passeio aleatório | **Sem diferença significativa** em nenhum horizonte; o painel usa o passeio aleatório e informa isso |
+| Dólar · cobertura do passeio aleatório | 82% (meta 80%) e 96% (meta 95%) |
+
+O que esses números dizem: o mercado tem informação que um modelo só com o histórico do IPCA não tem (preços de combustível, energia, alimentos da semana), e isso aparece no horizonte de 1 mês. No dólar, nenhum modelo simples supera o passeio aleatório, resultado clássico da literatura (Meese e Rogoff). Mostrar isso com teste estatístico é parte do produto.
 
 ---
 
@@ -359,7 +406,12 @@ python -c "import psycopg, os, pathlib; c=psycopg.connect(os.environ['DATABASE_U
 python src/extract.py
 python src/load.py
 
-# 6. Abrir o dashboard (http://localhost:8000)
+# 6. (Opcional) Forecast: coleta com datas de divulgação, backtest e previsão do dia
+python src/coletar_forecast.py
+python src/rodar_backtest.py      # leva alguns minutos (SARIMA)
+python src/prever_atual.py
+
+# 7. Abrir o dashboard (http://localhost:8000)
 python src/api.py
 ```
 
@@ -373,15 +425,23 @@ nexus-intelligence/
 │   ├── extract.py        # Extração e validação (API SGS)
 │   ├── load.py           # Carga incremental e auditoria
 │   ├── api.py            # API FastAPI + servidor do dashboard
-│   └── build_static.py   # Versão estática para o GitHub Pages
+│   ├── build_static.py   # Versão estática para o GitHub Pages
+│   ├── coleta/           # Forecast: coletores BCB, IBGE e Focus com datas de divulgação
+│   ├── forecast/         # Forecast: modelos, backtest, Diebold-Mariano, calibração
+│   ├── coletar_forecast.py
+│   ├── rodar_backtest.py
+│   └── prever_atual.py
 ├── sql/
 │   ├── schema.sql        # Tabelas indicadores e execucoes
+│   ├── forecast_schema.sql  # Versões, divulgações, Focus e backtests
 │   ├── consultas.sql     # Consultas de análise
 │   └── api/              # Consultas usadas pela API
 ├── web/
-│   └── index.html        # Dashboard
+│   ├── index.html        # Dashboard
+│   └── metodologia.html  # Metodologia das previsões
+├── tests/                # Testes Python e SQL
 ├── docs/                 # Imagens do README
-├── .github/workflows/    # Atualização diária e publicação
+├── .github/workflows/    # Atualização diária, recalibração e publicação
 ├── requirements.txt
 └── README.md
 ```
@@ -392,6 +452,8 @@ nexus-intelligence/
 
 - [x] Atualização automática agendada com GitHub Actions
 - [x] Publicação do dashboard na web (GitHub Pages)
+- [x] Previsão do IPCA e do dólar com backtest, comparação com o Focus e intervalos calibrados
+- [x] Banco gerenciado na nuvem (Neon) e cadências separadas de coleta e recalibração
 - [ ] Novos indicadores: IGP-M, CDI, PIB e taxa de desemprego
 - [ ] Detecção estatística de anomalias nas séries
 - [ ] Análises explicativas geradas com inteligência artificial
@@ -404,6 +466,10 @@ nexus-intelligence/
 Os dados utilizados neste projeto são obtidos da API pública do Sistema Gerenciador de Séries Temporais (SGS) do Banco Central do Brasil.
 
 🔗 https://dadosabertos.bcb.gov.br
+
+O NEXUS Forecast também usa a PTAX e as expectativas do Boletim Focus (APIs Olinda do Banco Central) e o calendário de divulgações do IBGE, para saber quando cada IPCA ficou público.
+
+🔗 https://servicodados.ibge.gov.br/api/docs/calendario
 
 ---
 

@@ -50,27 +50,41 @@ class FonteMemoria:
 
 
 class FonteBanco:
-    def __init__(self, conn):
+    """Lê do PostgreSQL. `reconectar` (opcional) abre uma conexão nova: num banco
+    gerenciado que suspende por inatividade (Neon), uma pausa longa entre consultas
+    derruba a conexão; nesse caso a consulta é refeita uma vez numa conexão nova."""
+
+    def __init__(self, conn, reconectar=None):
         self.conn = conn
+        self.reconectar = reconectar
+
+    def _consultar(self, sql: str, parametros: tuple = ()) -> list:
+        try:
+            return self.conn.execute(sql, parametros).fetchall()
+        except Exception as erro:
+            if self.reconectar is None or type(erro).__name__ not in ("OperationalError", "InterfaceError"):
+                raise
+            self.conn = self.reconectar()
+            return self.conn.execute(sql, parametros).fetchall()
 
     def conhecida_em(self, serie: str, momento: datetime) -> Historico:
-        linhas = self.conn.execute(
+        linhas = self._consultar(
             "SELECT data_referencia, valor, conhecido_desde FROM serie_conhecida_em(%s, %s) ORDER BY 1",
-            (serie, momento)).fetchall()
+            (serie, momento))
         indice = pd.to_datetime([l[0] for l in linhas])
         return Historico(pd.Series([float(l[1]) for l in linhas], index=indice),
                          pd.Series([l[2] for l in linhas], index=indice))
 
     def atual(self, serie: str) -> pd.Series:
-        linhas = self.conn.execute(
-            "SELECT data_referencia, valor FROM serie_atual WHERE serie = %s ORDER BY 1", (serie,)).fetchall()
+        linhas = self._consultar(
+            "SELECT data_referencia, valor FROM serie_atual WHERE serie = %s ORDER BY 1", (serie,))
         return pd.Series([float(l[1]) for l in linhas], index=pd.to_datetime([l[0] for l in linhas]))
 
     def focus_em(self, momento: datetime) -> pd.Series:
-        linhas = self.conn.execute(
-            "SELECT mes_alvo, mediana FROM focus_conhecido_em(%s, 0::smallint) ORDER BY 1", (momento,)).fetchall()
+        linhas = self._consultar(
+            "SELECT mes_alvo, mediana FROM focus_conhecido_em(%s, 0::smallint) ORDER BY 1", (momento,))
         return pd.Series([float(l[1]) for l in linhas], index=pd.to_datetime([l[0] for l in linhas]))
 
     def divulgacoes_ipca(self) -> list[datetime]:
-        return [l[0] for l in self.conn.execute(
-            "SELECT divulgado_em FROM divulgacoes WHERE serie = 'ipca_mensal' ORDER BY 1").fetchall()]
+        return [l[0] for l in self._consultar(
+            "SELECT divulgado_em FROM divulgacoes WHERE serie = 'ipca_mensal' ORDER BY 1")]

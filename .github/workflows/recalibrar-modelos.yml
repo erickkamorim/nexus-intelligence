@@ -1,0 +1,89 @@
+# Backtest completo dos modelos (rolling-origin) e recalibração dos intervalos.
+#
+#   * todo sábado      -> câmbio (passeio aleatório e ARIMA, 250 origens semanais)
+#   * todo dia 15      -> IPCA (SARIMA, Focus e modelos simples), depois da divulgação do IBGE
+#   * mudança no código dos modelos (push na main) -> as duas séries
+#   * manual (aba Actions > "Run workflow")       -> escolha a série
+#
+# Ao terminar, dispara "Atualizar dashboard" para publicar as previsões com a calibração nova.
+
+name: Recalibrar modelos
+
+on:
+  schedule:
+    - cron: "0 12 * * 6"    # sábado, 9h em Brasília
+    - cron: "0 12 15 * *"   # dia 15, 9h em Brasília
+  push:
+    branches: [main]
+    paths:
+      - "src/forecast/**"
+      - "src/rodar_backtest.py"
+      - "sql/forecast_schema.sql"
+  workflow_dispatch:
+    inputs:
+      serie:
+        description: "Série"
+        type: choice
+        options: [todas, ipca, cambio]
+        default: todas
+
+permissions:
+  contents: read
+  actions: write   # para disparar a atualização do dashboard no final
+
+concurrency:
+  group: nexus-banco
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    name: Backtest
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXUS_PROCESSOS: "4"   # o runner tem 4 núcleos e 16 GB
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Escolher a série
+        id: serie
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SERIE="${{ inputs.serie }}"
+          elif [ "${{ github.event.schedule }}" = "0 12 15 * *" ]; then
+            SERIE="ipca"
+          elif [ "${{ github.event.schedule }}" = "0 12 * * 6" ]; then
+            SERIE="cambio"
+          else
+            SERIE="todas"
+          fi
+          echo "serie=$SERIE" >> "$GITHUB_OUTPUT"
+          echo "Série: $SERIE"
+
+      # Garante dados do dia antes do backtest (a coleta é idempotente: o que já existe não vira versão nova)
+      - name: Coletar dados do Forecast
+        run: python src/coletar_forecast.py
+
+      - name: Rodar o backtest
+        run: python -u src/rodar_backtest.py --serie ${{ steps.serie.outputs.serie }}
+
+      - name: Guardar os resultados (CSV)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backtest-${{ steps.serie.outputs.serie }}-${{ github.run_number }}
+          path: |
+            data/backtest/
+            logs/
+          retention-days: 90
+
+      - name: Publicar as previsões com a calibração nova
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run atualizar-dashboard.yml --ref "${{ github.ref_name }}"

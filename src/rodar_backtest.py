@@ -81,6 +81,15 @@ def gravar(conn, cfg, referencia, parametros, previsoes, metricas: dict[tuple[st
     return execucao
 
 
+def gravar_em_conexao_nova(cfg, referencia, parametros, previsoes, metricas) -> int:
+    """O backtest leva vários minutos de cálculo: grava numa conexão aberta agora,
+    para não depender de uma conexão que o banco possa ter encerrado por inatividade."""
+    import psycopg
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        return gravar(conn, cfg, referencia, parametros, previsoes, metricas)
+
+
 def mostrar(titulo: str, m: pd.DataFrame) -> None:
     print(f"\n=== {titulo} ===")
     if m.empty:
@@ -119,7 +128,8 @@ def main():
     pasta.mkdir(parents=True, exist_ok=True)
     with psycopg.connect(DATABASE_URL) as conn:
         preparar_esquema(conn)
-        fonte = FonteBanco(conn)
+        conn.commit()
+        fonte = FonteBanco(conn, reconectar=lambda: psycopg.connect(DATABASE_URL, autocommit=True))
 
         # ---------------------------------------------------------------- IPCA
         if args.serie in ("ipca", "todas"):
@@ -154,7 +164,7 @@ def rodar_ipca(conn, fonte, args, pasta):
                   "n_erros_intervalo": IPCA.n_erros_intervalo, "primeira_origem": min(origens),
                   "ultima_origem": max(origens), "selecoes_sarima": sarima.selecoes,
                   "falhas_sarima": sarima.falhas}
-    gravar(conn, IPCA, "ingenuo", parametros, prev, metricas)
+    gravar_em_conexao_nova(IPCA, "ingenuo", parametros, prev, metricas)
     prev.to_csv(pasta / "ipca_previsoes.csv", index=False)
     if sarima.selecoes:
         print("\nOrdens do SARIMA escolhidas (só com dados de cada origem):")
@@ -180,7 +190,7 @@ def rodar_cambio(conn, fonte, args, pasta):
     parametros = {"origens": len(origens), "passo_dias_uteis": PASSO_CAMBIO, "horizontes": CAMBIO.horizontes,
                   "n_erros_intervalo": CAMBIO.n_erros_intervalo, "primeira_origem": min(origens),
                   "ultima_origem": max(origens), "selecoes_arima": arima.selecoes, "falhas_arima": arima.falhas}
-    gravar(conn, CAMBIO, "passeio_aleatorio", parametros, prev, {("variacao", "passeio_aleatorio"): m})
+    gravar_em_conexao_nova(CAMBIO, "passeio_aleatorio", parametros, prev, {("variacao", "passeio_aleatorio"): m})
     prev.to_csv(pasta / "cambio_previsoes.csv", index=False)
     if arima.selecoes:
         print("\nOrdens do ARIMA escolhidas:")

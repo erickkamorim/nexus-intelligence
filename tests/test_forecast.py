@@ -194,3 +194,40 @@ def test_dm_com_correcao_mantem_o_nivel_e_sem_correcao_rejeita_demais():
     taxa_corrigida, taxa_ingenua = rejeita_corrigido / simulacoes, rejeita_ingenuo / simulacoes
     assert taxa_corrigida <= 0.12
     assert taxa_ingenua > taxa_corrigida + 0.05
+
+
+def test_fonte_banco_reconecta_uma_vez_quando_a_conexao_cai():
+    from forecast.fontes import FonteBanco
+
+    class OperationalError(Exception):
+        pass
+
+    class Caida:
+        def execute(self, *_):
+            raise OperationalError("server closed the connection unexpectedly")
+
+    class Nova:
+        def execute(self, *_):
+            return self
+
+        def fetchall(self):
+            return [(pd.Timestamp("2024-01-01").date(), 0.42)]
+
+    fonte = FonteBanco(Caida(), reconectar=Nova)
+    serie = fonte.atual("ipca_mensal")
+    assert serie.iloc[0] == 0.42
+    assert isinstance(fonte.conn, Nova)
+
+
+def test_fonte_banco_sem_reconexao_repassa_o_erro():
+    from forecast.fontes import FonteBanco
+
+    class OperationalError(Exception):
+        pass
+
+    class Caida:
+        def execute(self, *_):
+            raise OperationalError("caiu")
+
+    with pytest.raises(OperationalError):
+        FonteBanco(Caida()).atual("ipca_mensal")
