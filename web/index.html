@@ -21,7 +21,7 @@
     --up: #ff6b5a;
     --down: #3ddc97;
     --blue: #6b93ff;
-    --radius: 28px;
+    --radius: 24px;
     --wide: "Unbounded", "Arial Black", system-ui, sans-serif;
     --body: "Inter", "Segoe UI", system-ui, sans-serif;
     --side-w: 248px;
@@ -60,8 +60,24 @@
   .dot.falha { background: var(--up); }
   @keyframes pulso { from { transform: scale(.6); opacity: .5; } to { transform: scale(1.8); opacity: 0; } }
 
+  /* Barra lateral retrátil */
+  aside, main { transition: width .28s cubic-bezier(.3,.9,.3,1), margin-left .28s cubic-bezier(.3,.9,.3,1); }
+  .recolher { position: absolute; top: 34px; right: -13px; width: 26px; height: 26px; border-radius: 50%;
+              background: #1d1d1d; border: 1px solid #333; color: var(--muted); display: grid; place-items: center;
+              cursor: pointer; z-index: 31; transition: color .2s, background .2s, transform .28s; }
+  .recolher:hover { color: #000; background: var(--yellow); border-color: var(--yellow); }
+  .recolher:focus-visible, .menu a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+  .recolher svg { width: 14px; height: 14px; stroke-width: 2.4; }
+  body.recolhido { --side-w: 84px; }
+  body.recolhido .recolher { transform: rotate(180deg); }
+  body.recolhido .brand > div:last-child, body.recolhido .menu a span, body.recolhido .menu-label,
+  body.recolhido .side-status p, body.recolhido #st-titulo { display: none; }
+  body.recolhido .brand { padding-left: 2px; }
+  body.recolhido .menu a { justify-content: center; padding: 12px; }
+  body.recolhido .side-status { padding: 14px; display: grid; place-items: center; }
+
   /* ---------- Área principal ---------- */
-  main { margin-left: var(--side-w); padding: 34px 40px 80px; max-width: calc(1320px + var(--side-w)); }
+  main { margin-left: var(--side-w); padding: 28px 36px 72px; max-width: calc(1320px + var(--side-w)); }
   .topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 26px; }
   .topbar h1 { font-family: var(--wide); font-size: 30px; font-weight: 700; letter-spacing: -.3px; line-height: 1.1; }
   .topbar p { color: var(--muted); margin-top: 6px; }
@@ -74,8 +90,8 @@
                transition: left .35s cubic-bezier(.3,.9,.3,1), width .35s cubic-bezier(.3,.9,.3,1); }
 
   .card { background: linear-gradient(180deg, #151515, #101010); border: 1px solid var(--line); border-radius: var(--radius);
-          padding: 26px; min-width: 0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 20px 40px -24px rgba(0, 0, 0, .9); }
-  .grid { display: grid; gap: 18px; }
+          padding: 20px 22px; min-width: 0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 20px 40px -24px rgba(0, 0, 0, .9); }
+  .grid { display: grid; gap: 14px; }
 
   /* ---------- Destaque ---------- */
   .overview { grid-template-columns: 1.35fr 1fr 1fr; grid-template-rows: auto auto; }
@@ -87,21 +103,21 @@
   .hero-label { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; }
   .hero-label .ico { background: #0b0b0b; color: var(--yellow); }
   .hero-tag { background: rgba(0,0,0,.1); padding: 7px 13px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-  .hero-value { font-family: var(--wide); font-weight: 700; font-size: 76px; letter-spacing: -2.5px; line-height: 1; margin: 26px 0 6px; position: relative; }
-  .hero-value small { font-family: var(--body); font-size: 18px; font-weight: 600; letter-spacing: 0; margin-left: 6px; opacity: .7; }
-  .hero-text { font-size: 15.5px; line-height: 1.55; max-width: 520px; position: relative; margin-top: 10px; }
+  .hero-value { font-family: var(--wide); font-weight: 700; font-size: 58px; letter-spacing: -2px; line-height: 1; margin: 16px 0 4px; position: relative; }
+  .hero-value small { font-family: var(--body); font-size: 15px; font-weight: 600; letter-spacing: 0; margin-left: 6px; opacity: .7; }
+  .hero-text { font-size: 14px; line-height: 1.5; max-width: 520px; position: relative; margin-top: 6px; }
   .hero-text b { font-weight: 700; }
-  .hero-chart { margin-top: auto; padding-top: 22px; height: 120px; }
+  .hero-chart { margin-top: auto; padding-top: 12px; height: 76px; }
 
-  .ico { width: 38px; height: 38px; border-radius: 13px; background: var(--yellow-soft); color: var(--yellow);
+  .ico { width: 32px; height: 32px; border-radius: 11px; background: var(--yellow-soft); color: var(--yellow);
          display: grid; place-items: center; flex-shrink: 0; }
-  .kpi { display: flex; flex-direction: column; gap: 12px; }
+  .kpi { display: flex; flex-direction: column; gap: 8px; }
   .kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .kpi-label { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; font-weight: 600; }
-  .kpi-value { font-family: var(--wide); font-size: 31px; font-weight: 700; letter-spacing: -.8px; line-height: 1; margin-top: 4px; }
+  .kpi-value { font-family: var(--wide); font-size: 26px; font-weight: 700; letter-spacing: -.8px; line-height: 1; margin-top: 4px; }
   .kpi-value small { font-family: var(--body); font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
   .kpi-foot { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); }
-  .spark { height: 46px; margin-top: auto; }
+  .spark { height: 36px; margin-top: auto; }
   .chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; font-weight: 700;
           font-size: 11.5px; background: var(--card-2); color: var(--muted); white-space: nowrap; }
   .chip svg { width: 13px; height: 13px; stroke-width: 2.4; }
@@ -109,7 +125,7 @@
   .chip.down { color: var(--down); background: rgba(61,220,151,.1); }
 
   /* ---------- Seções ---------- */
-  section { padding-top: 46px; }
+  section { padding-top: 38px; }
   .sec-title { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
   .sec-title h2 { font-family: var(--wide); font-size: 21px; font-weight: 700; }
   .sec-title p { color: var(--muted); font-size: 13px; }
@@ -227,7 +243,7 @@
     aside { inset: auto 50% 18px auto; transform: translateX(50%); width: auto; height: auto; padding: 7px;
             flex-direction: row; border: 1px solid var(--line); border-radius: 999px;
             background: rgba(13,13,13,.9); backdrop-filter: blur(14px); box-shadow: 0 18px 50px rgba(0,0,0,.6); }
-    .brand, .menu-label, .side-status, .menu a span { display: none; }
+    .brand, .menu-label, .side-status, .menu a span, .recolher { display: none; }
     .menu { flex-direction: row; }
     .menu a { padding: 12px 15px; }
     main { margin-left: 0; padding: 22px 16px 120px; }
@@ -265,19 +281,22 @@
 </svg>
 
 <aside>
+  <button class="recolher" id="recolher" type="button" aria-label="Recolher menu" title="Recolher menu">
+    <svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
   <div class="brand">
     <div class="logo"><svg class="i"><use href="#i-pulse"/></svg></div>
     <div><b>NEXUS</b><small>Intelligence</small></div>
   </div>
   <div class="menu-label">Painel</div>
   <nav class="menu" id="menu">
-    <a href="#visao" class="on"><svg class="i"><use href="#i-grid"/></svg><span>Visão geral</span></a>
-    <a href="#juros"><svg class="i"><use href="#i-percent"/></svg><span>Juros</span></a>
-    <a href="#inflacao"><svg class="i"><use href="#i-cart"/></svg><span>Inflação</span></a>
-    <a href="#cambio"><svg class="i"><use href="#i-dollar"/></svg><span>Câmbio</span></a>
-    <a href="#previsoes" id="menu-previsoes" hidden><svg class="i"><use href="#i-trend"/></svg><span>Previsões</span></a>
-    <a href="#dados"><svg class="i"><use href="#i-db"/></svg><span>Qualidade</span></a>
-    <a href="metodologia.html"><svg class="i"><use href="#i-book"/></svg><span>Metodologia</span></a>
+    <a href="#visao" class="on" title="Visão geral"><svg class="i"><use href="#i-grid"/></svg><span>Visão geral</span></a>
+    <a href="#juros" title="Juros"><svg class="i"><use href="#i-percent"/></svg><span>Juros</span></a>
+    <a href="#inflacao" title="Inflação"><svg class="i"><use href="#i-cart"/></svg><span>Inflação</span></a>
+    <a href="#cambio" title="Câmbio"><svg class="i"><use href="#i-dollar"/></svg><span>Câmbio</span></a>
+    <a href="#previsoes" id="menu-previsoes" hidden title="Previsões"><svg class="i"><use href="#i-trend"/></svg><span>Previsões</span></a>
+    <a href="#dados" title="Qualidade"><svg class="i"><use href="#i-db"/></svg><span>Qualidade</span></a>
+    <a href="metodologia.html" title="Metodologia"><svg class="i"><use href="#i-book"/></svg><span>Metodologia</span></a>
   </nav>
   <div class="side-status">
     <div class="t"><span class="dot" id="st-dot"></span><span id="st-titulo">Conectando…</span></div>
@@ -767,7 +786,7 @@ function renderVisao() {
     $("h-texto").innerHTML = textoResumo(r, ciclo);
     $("sub-data").textContent = `Dados oficiais do Banco Central atualizados até ${dataBR(parse(r.selic.data))}`;
   }
-  chart($("h-chart"), [{ name: "Selic", color: "#0b0b0b", type: "step", width: 2.6, fill: "#000", data: serie(s.selic) }], { height: 120, spark: true });
+  chart($("h-chart"), [{ name: "Selic", color: "#0b0b0b", type: "step", width: 2.6, fill: "#000", data: serie(s.selic) }], { height: 76, spark: true });
 
   if (r.ipca) {
     contar($("k-ipca"), r.ipca.acum_12m, 2, "", "<small>%</small>");
@@ -787,10 +806,10 @@ function renderVisao() {
     $("k-ciclo-foot").innerHTML = `<span>${ciclo.sinal < 0 ? "Ciclo de cortes" : "Ciclo de altas"} desde</span><span>${mesAno(ciclo.dataInicio)}</span>`;
   }
   const amarelo = COR.y;
-  chart($("s-ipca"), [{ name: "s", color: amarelo, fill: amarelo, data: ultimos(serie(s.ipca, 2), 12) }], { height: 46, spark: true });
-  chart($("s-dolar"), [{ name: "s", color: amarelo, fill: amarelo, data: ultimos(serie(s.dolar), 12) }], { height: 46, spark: true });
-  chart($("s-real"), [{ name: "s", color: amarelo, fill: amarelo, data: ultimos(serie(s.juro_real), 12) }], { height: 46, spark: true });
-  chart($("s-ciclo"), [{ name: "s", color: amarelo, type: "step", fill: amarelo, data: ultimos(serie(s.selic), 18) }], { height: 46, spark: true });
+  chart($("s-ipca"), [{ name: "s", color: amarelo, fill: amarelo, data: ultimos(serie(s.ipca, 2), 12) }], { height: 36, spark: true });
+  chart($("s-dolar"), [{ name: "s", color: amarelo, fill: amarelo, data: ultimos(serie(s.dolar), 12) }], { height: 36, spark: true });
+  chart($("s-real"), [{ name: "s", color: amarelo, fill: amarelo, data: ultimos(serie(s.juro_real), 12) }], { height: 36, spark: true });
+  chart($("s-ciclo"), [{ name: "s", color: amarelo, type: "step", fill: amarelo, data: ultimos(serie(s.selic), 18) }], { height: 36, spark: true });
 }
 
 function renderGraficos() {
@@ -1019,6 +1038,21 @@ async function carregar() {
 }
 
 /* ================= Interações ================= */
+// Barra lateral retrátil (preferência lembrada neste navegador)
+function aplicarRecolhido(recolhido, animar) {
+  document.body.classList.toggle("recolhido", recolhido);
+  const b = $("recolher");
+  b.setAttribute("aria-label", recolhido ? "Expandir menu" : "Recolher menu");
+  b.title = recolhido ? "Expandir menu" : "Recolher menu";
+  // os gráficos medem a largura: redesenha depois da transição
+  setTimeout(() => window.dispatchEvent(new Event("resize")), animar ? 300 : 0);
+}
+try { aplicarRecolhido(localStorage.getItem("nexus-menu") === "recolhido", false); } catch (e) { /* sem armazenamento */ }
+$("recolher").addEventListener("click", () => {
+  const recolhido = !document.body.classList.contains("recolhido");
+  aplicarRecolhido(recolhido, true);
+  try { localStorage.setItem("nexus-menu", recolhido ? "recolhido" : "aberto"); } catch (e) { /* ignora */ }
+});
 const seg = $("periodo"), pill = seg.querySelector(".pill");
 function moverPill() {
   const b = seg.querySelector("button.on");
