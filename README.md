@@ -337,6 +337,10 @@ Dois jeitos de comparar, sem gráfico de dois eixos:
 
 Período livre (de/até) ou atalhos de 1 ano, 2 anos e tudo, e botão para baixar o recorte em CSV (separador `;` e vírgula decimal, abre direto no Excel).
 
+<p align="center">
+<img src="docs/comparador.png" width="90%">
+</p>
+
 ### 🔮 Previsões
 
 Previsão do IPCA para os próximos 6 meses e do dólar para 21 dias úteis, com faixas de 80% e 95%, a expectativa do Boletim Focus no mesmo gráfico e um aviso em texto simples dizendo onde o modelo ganha, empata ou perde para as referências. Detalhes na seção 8.
@@ -347,6 +351,10 @@ Previsão do IPCA para os próximos 6 meses e do dólar para 21 dias úteis, com
 - **Dólar:** o realizado é a PTAX do h-ésimo dia com boletim depois da cotação-base, então feriados não atrapalham. O placar resume erro médio e quantas vezes o dólar ficou dentro das faixas de 80% e 95%.
 
 O placar começou em 14/11/2026 e cresce sozinho a cada atualização. As regras têm testes em `tests/sql/test_placar.sql` (previsão publicada depois da divulgação não conta, vale a última publicação de cada dia, fim de semana não vira dia útil).
+
+<p align="center">
+<img src="docs/placar.png" width="90%">
+</p>
 
 <p align="center">
 <img src="docs/previsoes.png" width="90%">
