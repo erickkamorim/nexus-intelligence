@@ -1155,8 +1155,10 @@ async function carregar() {
     })));
     DADOS = Object.fromEntries(nomes.map((n, i) => [n, resp[i]]));
     renderGraficos(); renderVisao(); renderQualidade();
+    checarCongelado();
     // Moedas e previsões são opcionais: a página funciona sem elas
-    fetch("api/moedas").then(r => r.ok ? r.json() : null).then(renderMoedas).catch(() => {});
+    fetch("api/moedas").then(r => r.ok ? r.json() : null).then(renderMoedas)
+      .then(() => { if (congelado.classList.contains("on")) copiarParaCongelado(); }).catch(() => {});
     try {
       const r = await fetch("api/previsoes");
       if (r.ok) { PREV = await r.json(); renderPrevisoes(); }
@@ -1229,12 +1231,13 @@ function atualizarCongelado() {
   congelado.classList.toggle("on", mostrar);
   congelado.setAttribute("aria-hidden", mostrar ? "false" : "true");
 }
-if (visaoGeral) {
-  new IntersectionObserver(([en]) => {
-    visaoForaDaTela = !en.isIntersecting && en.boundingClientRect.top < 0;
-    atualizarCongelado();
-  }).observe(visaoGeral);
+function checarCongelado() {
+  // a faixa aparece quando o fim dos cartões da visão geral já passou do topo da tela
+  visaoForaDaTela = !!visaoGeral && visaoGeral.getBoundingClientRect().bottom < 0;
+  atualizarCongelado();
 }
+window.addEventListener("scroll", checarCongelado, { passive: true });
+window.addEventListener("resize", checarCongelado);
 $("cg-periodo").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   const alvo = seg.querySelector(`button[data-m="${b.dataset.m}"]`); if (alvo) alvo.click();
