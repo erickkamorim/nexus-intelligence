@@ -217,3 +217,36 @@ def test_consolidar_recusa_valores_diferentes():
     b = Observacao("ptax_venda", date(2025, 4, 23), 5.80, None, "nao_verificavel", "t")
     with pytest.raises(ValueError):
         consolidar_duplicadas([a, b])
+
+
+def test_copia_do_calendario_ibge_guarda_so_o_ipca_e_respeita_datas_futuras(tmp_path):
+    from datetime import datetime
+
+    from coleta import ibge
+    from coleta.modelos import BRASILIA
+
+    itens = [
+        {"produto_id": 9256, "ano_referencia_inicio": 2026, "mes_referencia_inicio": 9,
+         "data_divulgacao": "09/10/2026 09:00:00", "titulo": "IPCA"},
+        {"produto_id": 9256, "ano_referencia_inicio": 2026, "mes_referencia_inicio": 10,
+         "data_divulgacao": "10/11/2026 09:00:00"},
+        {"produto_id": 9256, "ano_referencia_inicio": 2026, "mes_referencia_inicio": 11,
+         "data_divulgacao": "10/12/2026 09:00:00"},
+        {"produto_id": 9260, "ano_referencia_inicio": 2026, "mes_referencia_inicio": 10,
+         "data_divulgacao": "27/10/2026 09:00:00"},
+    ]
+    caminho = tmp_path / "calendario.json"
+    exportado = datetime(2026, 11, 14, 9, 0, tzinfo=BRASILIA)
+    ibge.salvar_copia(itens, caminho, exportado)
+
+    lidos, quando = ibge.ler_copia(caminho)
+    assert quando == exportado
+    assert len(lidos) == 3 and all(i["produto_id"] == 9256 for i in lidos)
+    assert ibge.ultima_data_agendada(lidos) == datetime(2026, 12, 10, 9, 0, tzinfo=BRASILIA)
+
+    # Em 14/11 a divulgação de novembro (agendada para 10/12) ainda não vale
+    em_novembro = ibge.interpretar(lidos, exportado)
+    assert sorted(m.month for m in em_novembro) == [9, 10]
+    # Depois de 10/12 ela passa a valer, pela mesma regra
+    em_dezembro = ibge.interpretar(lidos, datetime(2026, 12, 10, 10, 0, tzinfo=BRASILIA))
+    assert sorted(m.month for m in em_dezembro) == [9, 10, 11]

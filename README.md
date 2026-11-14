@@ -357,6 +357,7 @@ Previsão do **IPCA** (1 a 6 meses e acumulado em 12 meses) e do **dólar** (1 a
 - Cada valor guarda **quando ficou público**: o IPCA usa a data de divulgação do calendário oficial do IBGE, o dólar usa a hora da cotação PTAX e o Focus fica disponível no dia útil seguinte ao fechamento da semana.
 - **Revisões viram versões novas**, sem apagar a anterior (tabela `serie_versoes`, só inserção). A função `serie_conhecida_em(série, momento)` devolve o histórico exatamente como estava naquele momento.
 - Valores sem data verificável ficam fora do backtest em vez de receber uma data estimada.
+- A API do IBGE não responde a servidores fora do Brasil (como os do GitHub Actions). A automação usa uma cópia do calendário oficial guardada no repositório (`data/referencia/calendario_ibge_ipca.json`), exportada no Brasil com `src/exportar_calendario_ibge.py` uma vez por ano. Uma data agendada só passa a valer depois que acontece.
 
 **Backtest com origem móvel**
 

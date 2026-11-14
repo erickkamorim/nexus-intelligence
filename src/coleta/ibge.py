@@ -8,9 +8,18 @@ Formato conferido com amostra real (13/11/2026):
     como horário de Brasília, a leitura mais conservadora (a mais tardia);
   * o calendário não cobre os anos mais antigos (2004-2006 voltou vazio).
     Para esses meses, sgs.py usa um limite superior comprovado.
+
+A API do IBGE não responde a servidores fora do Brasil (como os do GitHub
+Actions). Por isso existe uma cópia do calendário no repositório
+(data/referencia/calendario_ibge_ipca.json), exportada de um computador no
+Brasil com src/exportar_calendario_ibge.py. A cópia guarda também as datas
+já agendadas; cada uma só passa a valer depois que acontece, pela mesma regra
+de interpretar().
 """
 
+import json
 from datetime import date, datetime
+from pathlib import Path
 
 from .http import montar_url, obter_json
 from .modelos import BRASILIA
@@ -59,3 +68,24 @@ def baixar(inicio: date, fim: date, obter=obter_json, por_pagina: int = 500) -> 
 
 def coletar(inicio: date, fim: date, agora: datetime, obter=obter_json) -> dict[date, datetime]:
     return interpretar(baixar(inicio, fim, obter), agora)
+
+
+def salvar_copia(itens: list[dict], caminho: Path, exportado_em: datetime) -> list[dict]:
+    """Guarda só os itens do IPCA, com os campos usados, para a automação ler sem a API."""
+    ipca = [{c: item[c] for c in CAMPOS} for item in itens if item.get("produto_id") == PRODUTO_IPCA]
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    caminho.write_text(json.dumps({"fonte": URL, "exportado_em": exportado_em.isoformat(timespec="seconds"),
+                                   "produto_id": PRODUTO_IPCA, "itens": ipca},
+                                  ensure_ascii=False, indent=1), encoding="utf-8")
+    return ipca
+
+
+def ler_copia(caminho: Path) -> tuple[list[dict], datetime]:
+    dados = json.loads(caminho.read_text(encoding="utf-8"))
+    return dados["itens"], datetime.fromisoformat(dados["exportado_em"])
+
+
+def ultima_data_agendada(itens: list[dict]) -> datetime | None:
+    datas = [datetime.strptime(i["data_divulgacao"].strip(), "%d/%m/%Y %H:%M:%S").replace(tzinfo=BRASILIA)
+             for i in itens if i.get("produto_id") == PRODUTO_IPCA]
+    return max(datas) if datas else None

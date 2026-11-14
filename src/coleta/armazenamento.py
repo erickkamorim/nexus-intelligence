@@ -41,13 +41,13 @@ def gravar_serie(conn, execucao: int, obs: list[Observacao]) -> int:
         return conn.execute("SELECT registrar_versoes(%s, %s)", (execucao, primeira_carga)).fetchone()[0]
 
 
-def gravar_divulgacoes(conn, divulgacoes: dict) -> None:
+def gravar_divulgacoes(conn, divulgacoes: dict, fonte: str = "ibge_calendario_v3") -> None:
     with conn.transaction():
         conn.cursor().executemany(
             """INSERT INTO divulgacoes (serie, mes_referencia, divulgado_em, fonte)
-               VALUES ('ipca_mensal', %s, %s, 'ibge_calendario_v3')
+               VALUES ('ipca_mensal', %s, %s, %s)
                ON CONFLICT (serie, mes_referencia) DO NOTHING""",
-            list(divulgacoes.items()))
+            [(mes, quando, fonte) for mes, quando in divulgacoes.items()])
 
 
 def gravar_focus(conn, execucao: int, regs: list[ExpectativaFocus]) -> int:

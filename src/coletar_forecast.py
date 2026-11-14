@@ -75,6 +75,30 @@ def sondar(pasta: Path) -> None:
     print(f"\nAmostras salvas em {pasta}")
 
 
+COPIA_CALENDARIO = RAIZ / "data" / "referencia" / "calendario_ibge_ipca.json"
+
+
+def calendario_ipca(inicio: date, hoje: date) -> tuple[dict, str] | None:
+    """Datas de divulgação do IPCA: da API do IBGE ou, se ela não responder (servidores
+    fora do Brasil), da cópia do calendário guardada no repositório."""
+    agora = datetime.now(BRASILIA)
+    try:
+        return ibge.coletar(inicio, hoje, agora), "ibge_calendario_v3"
+    except Exception as erro:
+        log.warning("API do calendário do IBGE indisponível (%s)", type(erro).__name__)
+    if not COPIA_CALENDARIO.exists():
+        log.error("Sem a API do IBGE e sem cópia do calendário em %s", COPIA_CALENDARIO)
+        return None
+    itens, exportado_em = ibge.ler_copia(COPIA_CALENDARIO)
+    ultima = ibge.ultima_data_agendada(itens)
+    log.info("Usando a cópia do calendário do IBGE exportada em %s (agenda até %s)",
+             f"{exportado_em:%d/%m/%Y}", f"{ultima:%d/%m/%Y}" if ultima else "-")
+    if ultima is None or ultima < agora:
+        log.warning("A cópia do calendário do IBGE não cobre as próximas divulgações: "
+                    "rode src/exportar_calendario_ibge.py num computador no Brasil e atualize o arquivo")
+    return ibge.interpretar(itens, agora), f"ibge_calendario_v3 (cópia de {exportado_em:%d/%m/%Y})"
+
+
 def relatar(nome: str, problemas: list) -> None:
     for p in problemas:
         (log.error if p.grave else log.warning)("%s | %s | %s | %s", nome, p.regra, p.chave, p.detalhe)
@@ -124,12 +148,11 @@ def coletar(args) -> int:
         calendario = ptax.dias_uteis(cotacoes)
 
         # 2. Calendário do IBGE
-        divulgacoes = {}
-        try:
-            divulgacoes = ibge.coletar(args.inicio_ipca, hoje, datetime.now(BRASILIA))
-            arm.gravar_divulgacoes(conn, divulgacoes)
-        except Exception:
-            log.exception("Calendário do IBGE indisponível: o IPCA ficará como 'nao_verificavel'")
+        divulgacoes = calendario_ipca(args.inicio_ipca, hoje)
+        if divulgacoes:
+            arm.gravar_divulgacoes(conn, *divulgacoes)
+            divulgacoes = divulgacoes[0]
+        else:
             falhas.append("ibge_calendario")
 
         # 3. IPCA
