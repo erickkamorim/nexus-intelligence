@@ -287,13 +287,15 @@ No topo, uma **faixa com a PTAX de fechamento** de sete moedas (dólar, euro, li
 
 Cinco cartões com os indicadores do momento (Selic, IPCA 12 meses, dólar, juro real e ciclo do Copom) e, logo abaixo, um **resumo da conjuntura escrito automaticamente** a partir dos dados: última decisão do Copom, ciclo atual, inflação, juro real e variação do dólar.
 
+Ao rolar a página, a PTAX, os cinco indicadores e os botões de período **ficam congelados no topo**, como congelar painéis numa planilha. O menu lateral abre recolhido para dar mais espaço aos gráficos.
+
 <p align="center">
 <img src="docs/visao-geral.png" width="90%">
 </p>
 
 ### 🏛️ Juros
 
-Selic, IPCA 12 meses e juro real no mesmo gráfico, com **cada decisão do Copom marcada na linha** (verde para corte, vermelho para alta) e uma linha do tempo agrupada por ciclo.
+Selic, IPCA 12 meses e juro real no mesmo gráfico, com **cada decisão do Copom marcada na linha** (verde quando a Selic sobe, vermelho quando cai) e uma linha do tempo agrupada por ciclo.
 
 <p align="center">
 <img src="docs/juros.png" width="90%">
