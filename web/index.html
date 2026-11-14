@@ -1204,7 +1204,7 @@ seg.addEventListener("click", e => {
 moverPill();
 document.fonts && document.fonts.ready.then(moverPill);
 
-// Faixa congelada: com "Tudo" selecionado, PTAX + indicadores + período ficam fixos no topo
+// Faixa congelada (em qualquer período): PTAX + indicadores + período ficam fixos no topo
 // depois que a visão geral sai da tela (como "congelar painéis" no Excel).
 const congelado = $("congelado"), visaoGeral = document.querySelector("#visao .overview");
 let visaoForaDaTela = false;
@@ -1226,8 +1226,10 @@ function copiarParaCongelado() {
   $("cg-ticker-data").textContent = $("ticker-data").textContent;
 }
 function atualizarCongelado() {
-  const mostrar = !!DADOS && MESES_FILTRO === 0 && visaoForaDaTela;
+  const mostrar = !!DADOS && visaoForaDaTela;
   if (mostrar && !congelado.classList.contains("on")) copiarParaCongelado();
+  // destaca na faixa o mesmo período escolhido no topo
+  $("cg-periodo").querySelectorAll("button").forEach(x => x.classList.toggle("on", Number(x.dataset.m) === MESES_FILTRO));
   congelado.classList.toggle("on", mostrar);
   congelado.setAttribute("aria-hidden", mostrar ? "false" : "true");
 }
