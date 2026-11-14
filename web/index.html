@@ -77,7 +77,7 @@
   body.recolhido .side-status { padding: 14px; display: grid; place-items: center; }
 
   /* ---------- Área principal ---------- */
-  main { margin-left: var(--side-w); padding: 28px 36px 72px; max-width: calc(1320px + var(--side-w)); }
+  main { margin-left: var(--side-w); padding: 28px max(36px, calc((100vw - var(--side-w) - 1600px) / 2)) 72px; }
   .topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 26px; }
   .topbar h1 { font-family: var(--wide); font-size: 30px; font-weight: 700; letter-spacing: -.3px; line-height: 1.1; }
   .topbar p { color: var(--muted); margin-top: 6px; }
