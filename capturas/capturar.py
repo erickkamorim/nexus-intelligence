@@ -12,7 +12,7 @@ async def pagina(b, w, h, menu, url=BASE, dpr=2):
     await pg.wait_for_timeout(3500)
     return ctx, pg
 
-async def secao(pg, sel, nome, extra=0):
+async def secao(pg, sel, nome, extra=0, forcar=False):
     # posiciona a seção logo abaixo da faixa congelada
     await pg.evaluate("""([s, extra]) => {
       const el = document.querySelector(s);
@@ -21,6 +21,8 @@ async def secao(pg, sel, nome, extra=0):
     }""", [sel, extra])
     await pg.wait_for_timeout(500)
     await pg.evaluate("window.dispatchEvent(new Event('scroll'))")
+    if forcar:
+        await pg.evaluate("visaoForaDaTela = true; atualizarCongelado()")
     await pg.wait_for_timeout(2500)
     await pg.screenshot(path=OUT + nome)
 
@@ -33,11 +35,11 @@ async def main():
         # menu recolhido (padrão)
         ctx, pg = await pagina(b, 1366, 768, "recolhido")
         await pg.screenshot(path=OUT + "visao-geral.png")
-        await secao(pg, "#juros", "juros.png")
+        await secao(pg, "#juros", "juros.png", forcar=True)
         await secao(pg, "#inflacao", "inflacao.png")
         await secao(pg, "#cambio", "cambio.png")
         await secao(pg, "#previsoes", "previsoes.png")
-        await secao(pg, "#dados", "qualidade.png")
+        await secao(pg, "#dados", "qualidade.png", extra=60)
         await ctx.close()
         ctx, pg = await pagina(b, 1366, 768, "recolhido", BASE + "metodologia.html")
         await pg.screenshot(path=OUT + "metodologia.png"); await ctx.close()
