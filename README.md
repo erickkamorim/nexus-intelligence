@@ -141,6 +141,12 @@ O projeto cobre todas as etapas de um fluxo de dados:
 
 ✅ Tooltips interativos em todos os gráficos
 
+✅ Placar ao vivo: previsões publicadas com data, conferidas contra o dado oficial e contra o Focus
+
+✅ Comparador de indicadores (taxas na mesma escala ou "R$ 100 no início") com exportação em CSV
+
+✅ Agenda com a próxima divulgação do IPCA, a próxima decisão do Copom e a próxima atualização
+
 ✅ Painel de qualidade dos dados
 
 ✅ Layout responsivo com tema escuro
@@ -271,6 +277,9 @@ A API em FastAPI expõe os dados para o dashboard. As consultas ficam em arquivo
 | `GET /api/series` | Séries históricas para os gráficos |
 | `GET /api/copom` | Histórico de decisões do Copom |
 | `GET /api/qualidade` | Cobertura de cada série e histórico de cargas |
+| `GET /api/previsoes` | Retrato mais recente das previsões publicadas |
+| `GET /api/placar` | Previsões publicadas comparadas ao dado oficial divulgado depois |
+| `GET /api/agenda` | Calendários oficiais: divulgações do IPCA (IBGE) e reuniões do Copom (Banco Central) |
 
 A documentação interativa fica disponível em `http://localhost:8000/docs`.
 
@@ -286,6 +295,8 @@ O dashboard foi desenvolvido do zero em HTML, CSS e JavaScript, com gráficos em
 No topo, uma **faixa com a PTAX de fechamento** de sete moedas (dólar, euro, libra, iene, franco suíço, dólar canadense e australiano) e a variação sobre o dia útil anterior. É a taxa de referência diária do Banco Central, não uma cotação em tempo real, e a faixa mostra a data do boletim.
 
 Cinco cartões com os indicadores do momento (Selic, IPCA 12 meses, dólar, juro real e ciclo do Copom) e, logo abaixo, um **resumo da conjuntura escrito automaticamente** a partir dos dados: última decisão do Copom, ciclo atual, inflação, juro real e variação do dólar.
+
+Abaixo do resumo, uma **agenda** mostra a próxima divulgação do IPCA (calendário do IBGE), a próxima decisão do Copom (calendário do Banco Central) e quando o NEXUS atualiza de novo, com a contagem de dias.
 
 Ao rolar a página, a PTAX, os cinco indicadores e os botões de período **ficam congelados no topo**, como congelar painéis numa planilha. O menu lateral abre recolhido para dar mais espaço aos gráficos.
 
@@ -317,9 +328,25 @@ Cotação diária do dólar com média móvel de 21 dias úteis, mínima, máxim
 <img src="docs/cambio.png" width="90%">
 </p>
 
+### 🔀 Comparador
+
+Dois jeitos de comparar, sem gráfico de dois eixos:
+
+- **Taxas em %:** Selic meta, IPCA 12 meses e juro real, que estão todas em % ao ano e por isso dividem a mesma escala.
+- **R$ 100 no início:** quanto R$ 100 viraram no período escolhido, aplicados na Selic, convertidos em dólar ou corrigidos pela inflação, com o ganho real da Selic. Termina no último mês em que todos os indicadores escolhidos têm dado.
+
+Período livre (de/até) ou atalhos de 1 ano, 2 anos e tudo, e botão para baixar o recorte em CSV (separador `;` e vírgula decimal, abre direto no Excel).
+
 ### 🔮 Previsões
 
 Previsão do IPCA para os próximos 6 meses e do dólar para 21 dias úteis, com faixas de 80% e 95%, a expectativa do Boletim Focus no mesmo gráfico e um aviso em texto simples dizendo onde o modelo ganha, empata ou perde para as referências. Detalhes na seção 8.
+
+**Placar ao vivo.** O backtest mede o passado simulado; o placar mede o que o NEXUS publicou de verdade. Cada execução grava um retrato das previsões (`previsoes_publicadas`), e a consulta `sql/api/placar.sql` confere cada uma com o dado oficial que saiu depois:
+
+- **IPCA:** vale a última previsão publicada **antes** do IBGE divulgar o mês, ao lado do Focus do mesmo momento. O placar mostra quem chegou mais perto e se o realizado caiu dentro da faixa de 80%.
+- **Dólar:** o realizado é a PTAX do h-ésimo dia com boletim depois da cotação-base, então feriados não atrapalham. O placar resume erro médio e quantas vezes o dólar ficou dentro das faixas de 80% e 95%.
+
+O placar começou em 14/11/2026 e cresce sozinho a cada atualização. As regras têm testes em `tests/sql/test_placar.sql` (previsão publicada depois da divulgação não conta, vale a última publicação de cada dia, fim de semana não vira dia útil).
 
 <p align="center">
 <img src="docs/previsoes.png" width="90%">
@@ -473,6 +500,8 @@ nexus-intelligence/
 - [x] Banco gerenciado na nuvem (Neon) e cadências separadas de coleta e recalibração
 - [ ] Novos indicadores: IGP-M, CDI, PIB e taxa de desemprego
 - [ ] Detecção estatística de anomalias nas séries
+- [x] Placar ao vivo das previsões publicadas
+- [x] Comparador de indicadores com exportação em CSV e agenda de divulgações
 - [ ] Análises explicativas geradas com inteligência artificial
 - [ ] Relatório complementar em Power BI
 

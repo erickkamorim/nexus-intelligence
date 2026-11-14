@@ -67,6 +67,7 @@
     <a href="#metricas">Métricas</a>
     <a href="#intervalos">Intervalos</a>
     <a href="#resultados">Resultados</a>
+    <a href="#placar">Placar ao vivo</a>
     <a href="#limitacoes">Limitações</a>
   </nav>
 
@@ -199,8 +200,22 @@
         aleatório, o dashboard usa o passeio aleatório. Uma calibração com janela móvel é o caminho para uma versão futura.</p>
     </section>
 
+    <section id="placar">
+      <h2><span class="n">9</span>Placar ao vivo</h2>
+      <p>O backtest reconstrói o passado com cuidado, mas continua sendo uma simulação. O placar é o teste fora da amostra de verdade:
+        cada execução grava um retrato das previsões com data e hora (<code>previsoes_publicadas</code>), e nada é recalculado depois.</p>
+      <ul>
+        <li><b>IPCA:</b> para cada mês e antecedência, vale a última previsão publicada antes do horário de divulgação do IBGE. Ela é
+          comparada ao valor oficial e ao Focus registrado no mesmo retrato.</li>
+        <li><b>Dólar:</b> para cada cotação-base e horizonte, vale a última previsão publicada com aquela base. O realizado é a PTAX do
+          h-ésimo dia com boletim depois da base, o que corrige a aproximação de dias úteis sem feriados usada na previsão.</li>
+        <li>O placar começou em 14/11/2026. Os primeiros resultados chegam com a PTAX de 16/11 e o IPCA de novembro, em 11/12.
+          Com poucos meses, ainda não dá para tirar conclusão estatística: o backtest segue sendo a principal evidência.</li>
+      </ul>
+    </section>
+
     <section id="limitacoes">
-      <h2><span class="n">9</span>Limitações</h2>
+      <h2><span class="n">10</span>Limitações</h2>
       <ul>
         <li>Os modelos usam só o histórico da própria série; o mercado tem muito mais informação.</li>
         <li>Mudanças de regime (como a pandemia) afetam qualquer modelo estimado com o passado.</li>

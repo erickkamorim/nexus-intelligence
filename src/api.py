@@ -86,6 +86,22 @@ def moedas():
     return conteudo
 
 
+@app.get("/api/placar", summary="Placar ao vivo: previsões publicadas contra o dado oficial divulgado depois")
+def placar():
+    try:
+        return consultar("placar")
+    except HTTPException:
+        raise
+    except Exception as erro:  # tabelas do Forecast ainda não existem neste banco
+        raise HTTPException(status_code=404, detail=f"Placar indisponível: {erro}") from erro
+
+
+@app.get("/api/agenda", summary="Próximas divulgações do IPCA (IBGE) e reuniões do Copom (Banco Central)")
+def agenda():
+    from build_static import montar_agenda  # mesma função usada na versão estática
+    return montar_agenda()
+
+
 # O dashboard (web/index.html) é servido na raiz do site
 app.mount("/", StaticFiles(directory=PASTA_WEB, html=True), name="web")
 
