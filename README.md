@@ -343,7 +343,7 @@ Garantias da automação:
 - **Nada é publicado sem os testes passarem** (74 testes em Python e testes SQL do versionamento, num PostgreSQL temporário).
 - **Se a extração do BCB falhar**, a publicação é interrompida e a versão anterior continua no ar.
 - **Se só o Forecast falhar**, o painel é publicado com a última previsão válida e o GitHub mostra um aviso.
-- **Um processo por vez no banco:** a atualização diária espera o backtest terminar.
+- **Uma coleta por vez no banco:** a atualização diária e a recalibração podem rodar juntas, e uma trava no PostgreSQL (`pg_advisory_lock`) faz a segunda coleta esperar a primeira.
 - Os resultados de cada backtest ficam guardados em CSV por 90 dias (artefatos do Actions).
 
 ---

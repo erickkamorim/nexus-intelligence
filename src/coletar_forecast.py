@@ -114,6 +114,7 @@ def coletar(args) -> int:
     hoje = date.today()
     falhas = []
     with psycopg.connect(DATABASE_URL) as conn:
+        arm.travar_coleta(conn)
         arm.preparar_esquema(conn)
 
         def etapa(fonte, executar):

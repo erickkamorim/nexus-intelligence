@@ -34,7 +34,7 @@ permissions:
   actions: write   # para disparar a atualização do dashboard no final
 
 concurrency:
-  group: nexus-banco
+  group: nexus-recalibrar
   cancel-in-progress: false
 
 jobs:

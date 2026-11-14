@@ -24,9 +24,10 @@ permissions:
   pages: write
   id-token: write
 
-# Um processo por vez no banco: a atualização diária espera o backtest terminar
+# Uma publicação por vez. A coleta usa uma trava no próprio banco (pg_advisory_lock),
+# então esta atualização pode rodar junto com a recalibração sem conflito.
 concurrency:
-  group: nexus-banco
+  group: pages
   cancel-in-progress: false
 
 jobs:

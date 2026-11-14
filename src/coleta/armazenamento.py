@@ -13,6 +13,17 @@ def preparar_esquema(conn) -> None:
     conn.commit()
 
 
+TRAVA_COLETA = 742_001  # chave do advisory lock: uma coleta por vez no banco
+
+
+def travar_coleta(conn) -> None:
+    """A atualização diária e a recalibração podem rodar ao mesmo tempo e as duas
+    coletam. A trava (pg_advisory_lock) faz a segunda esperar a primeira terminar;
+    ela é liberada sozinha quando a conexão fecha."""
+    conn.execute("SELECT pg_advisory_lock(%s)", (TRAVA_COLETA,))
+    conn.commit()
+
+
 def iniciar_execucao(conn, fonte: str) -> int:
     execucao = conn.execute("INSERT INTO coleta_execucoes (fonte) VALUES (%s) RETURNING id", (fonte,)).fetchone()[0]
     conn.commit()
