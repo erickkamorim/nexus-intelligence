@@ -336,11 +336,11 @@ O banco de produção é um **PostgreSQL gerenciado no Neon** (região São Paul
 | Todo dia útil, 19h | `atualizar-dashboard.yml` | Testes → coleta do BCB, IBGE e Focus → previsão do dia → publicação |
 | Todo sábado | `recalibrar-modelos.yml` | Backtest completo do câmbio |
 | Todo dia 15 | `recalibrar-modelos.yml` | Backtest do IPCA e do SARIMA, depois da divulgação do IBGE |
-| Mudança no código dos modelos | `recalibrar-modelos.yml` | Backtest das duas séries |
+| Mudança nos modelos, na coleta ou no calendário do IBGE | `recalibrar-modelos.yml` | Backtest das duas séries |
 
 Garantias da automação:
 
-- **Nada é publicado sem os testes passarem** (72 testes em Python e testes SQL do versionamento, num PostgreSQL temporário).
+- **Nada é publicado sem os testes passarem** (74 testes em Python e testes SQL do versionamento, num PostgreSQL temporário).
 - **Se a extração do BCB falhar**, a publicação é interrompida e a versão anterior continua no ar.
 - **Se só o Forecast falhar**, o painel é publicado com a última previsão válida e o GitHub mostra um aviso.
 - **Um processo por vez no banco:** a atualização diária espera o backtest terminar.

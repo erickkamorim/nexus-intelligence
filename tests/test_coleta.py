@@ -250,3 +250,16 @@ def test_copia_do_calendario_ibge_guarda_so_o_ipca_e_respeita_datas_futuras(tmp_
     # Depois de 10/12 ela passa a valer, pela mesma regra
     em_dezembro = ibge.interpretar(lidos, datetime(2026, 12, 10, 10, 0, tzinfo=BRASILIA))
     assert sorted(m.month for m in em_dezembro) == [9, 10, 11]
+
+
+def test_calendario_ibge_com_hora_antes_do_expediente_usa_o_fim_do_dia():
+    from datetime import datetime
+
+    from coleta import ibge
+    from coleta.modelos import BRASILIA
+
+    # 2018: registro às 0h, antes da divulgação das 9h -> fim do dia (limite superior)
+    assert ibge.ler_data("08/06/2018 00:00:00") == datetime(2018, 6, 8, 23, 59, tzinfo=BRASILIA)
+    assert ibge.ler_data("08/12/2017 02:00:00") == datetime(2017, 12, 8, 23, 59, tzinfo=BRASILIA)
+    # Horários a partir das 9h são mantidos
+    assert ibge.ler_data("12/11/2026 12:00:00") == datetime(2026, 11, 12, 12, 0, tzinfo=BRASILIA)

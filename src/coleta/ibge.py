@@ -29,6 +29,20 @@ PRODUTO_IPCA = 9256
 CAMPOS = ("produto_id", "ano_referencia_inicio", "mes_referencia_inicio", "data_divulgacao")
 
 
+HORA_DIVULGACAO = 9  # o IBGE divulga o IPCA às 9h de Brasília
+
+
+def ler_data(texto: str) -> datetime:
+    """Lê a data do calendário como horário de Brasília. Em 2017 e 2018 parte dos
+    registros vem com hora entre 0h e 3h, antes do horário em que o IBGE publica:
+    a hora não é confiável e lê-la ao pé da letra anteciparia o dado em até 9 horas.
+    Nesses casos vale o fim do dia, um limite superior seguro."""
+    quando = datetime.strptime(texto.strip(), "%d/%m/%Y %H:%M:%S").replace(tzinfo=BRASILIA)
+    if quando.hour < HORA_DIVULGACAO:
+        quando = quando.replace(hour=23, minute=59, second=0)
+    return quando
+
+
 def interpretar(itens: list[dict], agora: datetime) -> dict[date, datetime]:
     """Mês de referência -> momento da divulgação, só para divulgações já ocorridas.
     Datas agendadas para o futuro não são prova de publicação e ficam de fora."""
@@ -43,7 +57,7 @@ def interpretar(itens: list[dict], agora: datetime) -> dict[date, datetime]:
         if not (1 <= mes <= 12 and ano > 1900):
             raise ValueError(f"Mês de referência inválido no calendário do IBGE: {item!r}")
         referencia = date(ano, mes, 1)
-        quando = datetime.strptime(item["data_divulgacao"].strip(), "%d/%m/%Y %H:%M:%S").replace(tzinfo=BRASILIA)
+        quando = ler_data(item["data_divulgacao"])
         if quando > agora:
             continue
         if quando.date() <= referencia.replace(day=28):
@@ -86,6 +100,5 @@ def ler_copia(caminho: Path) -> tuple[list[dict], datetime]:
 
 
 def ultima_data_agendada(itens: list[dict]) -> datetime | None:
-    datas = [datetime.strptime(i["data_divulgacao"].strip(), "%d/%m/%Y %H:%M:%S").replace(tzinfo=BRASILIA)
-             for i in itens if i.get("produto_id") == PRODUTO_IPCA]
+    datas = [ler_data(i["data_divulgacao"]) for i in itens if i.get("produto_id") == PRODUTO_IPCA]
     return max(datas) if datas else None

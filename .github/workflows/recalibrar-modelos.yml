@@ -2,7 +2,7 @@
 #
 #   * todo sábado      -> câmbio (passeio aleatório e ARIMA, 250 origens semanais)
 #   * todo dia 15      -> IPCA (SARIMA, Focus e modelos simples), depois da divulgação do IBGE
-#   * mudança no código dos modelos (push na main) -> as duas séries
+#   * mudança nos modelos, na coleta ou no calendário do IBGE (push na main) -> as duas séries
 #   * manual (aba Actions > "Run workflow")       -> escolha a série
 #
 # Ao terminar, dispara "Atualizar dashboard" para publicar as previsões com a calibração nova.
@@ -18,6 +18,8 @@ on:
     paths:
       - "src/forecast/**"
       - "src/rodar_backtest.py"
+      - "src/coleta/**"
+      - "data/referencia/**"
       - "sql/forecast_schema.sql"
   workflow_dispatch:
     inputs:
