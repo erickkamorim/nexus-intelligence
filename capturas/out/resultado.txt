@@ -1,8 +1,0 @@
-placar: {"primeira_publicacao": "2026-11-14T12:37:33.072658+00:00", "ultima_publicacao": "2026-11-14T21:58:27.108998+00:00", "publicacoes": 18, "dias_publicados": 1, "ipca": {"avaliadas": [], "em_aberto": 6, "proximo_alvo": "2026-11-01"}, "cambio": {"avaliadas": [], "em_aberto": 4, "proximo_alvo": "2026-11-16"}}
-d erros: []
-csv: nexus-r100-2024-12-a-2026-10.csv
-menu itens: 8
-d erros finais: []
-m erros: []
-menu celular: [20, 370, 390] rolagem lateral: 390
-m erros finais: []
