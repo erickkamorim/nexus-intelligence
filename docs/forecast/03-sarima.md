@@ -114,3 +114,32 @@ os erros do próprio backtest (`src/forecast/calibracao.py`, método CQR de Roma
 O resultado aparece como modelos `sarima_calibrado` e `arima_log_calibrado`, com a cobertura
 medida fora da amostra. Os testes (`tests/test_calibracao.py`) verificam que a calibração corrige
 intervalos estreitos e largos e que alterar valores ainda não publicados não muda o intervalo.
+
+## Resultados após a calibração (backtest de 14/11/2026)
+
+**IPCA, comparação com a média sazonal de 5 anos** (melhor modelo simples; RMSE relativo < 1 = erro menor):
+
+| h | SARIMA | Focus | Cobertura SARIMA 80% / 95% | Cobertura calibrada 80% / 95% |
+|---|---|---|---|---|
+| 1 | 0,840 (melhor, significativo) | 0,637 (melhor) | 63% / 82% | 83% / 97% |
+| 2 | 0,901 (melhor, significativo) | 0,860 (melhor) | 69% / 87% | 84% / 98% |
+| 3 | 0,936 (sem diferença) | 0,899 (melhor) | 68% / 84% | 82% / 96% |
+| 4 | 0,952 (sem diferença) | 0,921 (melhor) | 70% / 86% | 83% / 97% |
+| 5 | 0,956 (sem diferença) | 0,936 (sem diferença) | 72% / 84% | 85% / 95% |
+| 6 | 0,950 (sem diferença) | 0,954 (sem diferença) | 69% / 85% | 85% / 96% |
+
+- O SARIMA supera de forma significativa o melhor modelo simples em 1 e 2 meses.
+- A calibração conformal levou a cobertura do IPCA para perto do nominal (82% a 85% para 80%;
+  95% a 98% para 95%), com leve excesso de cautela.
+
+**Câmbio:** a calibração não corrigiu o excesso de largura do ARIMA (cobertura de 95% foi de
+96%-98% para 97%-99%). Causas: poucos escores no início do backtest (com n = 24, o quantil de 95%
+é praticamente o maior escore observado) e volatilidade que muda ao longo do tempo. Uma
+calibração adaptativa com janela móvel é o caminho natural, mas não é necessária para o produto.
+
+## Decisão para o dashboard
+
+| Série | O que é exibido | Por quê |
+|---|---|---|
+| IPCA | SARIMA com intervalos calibrados, ao lado da mediana do Focus | Empata com o mercado a partir de 2 meses, supera o melhor modelo simples em 1 e 2 meses e tem intervalos calibrados |
+| Câmbio | Passeio aleatório com intervalos empíricos | Nenhum modelo o superou; seus intervalos já estavam calibrados (82% / 96%) |
