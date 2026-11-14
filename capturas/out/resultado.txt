@@ -1,0 +1,14 @@
+snapshots: [(18, datetime.datetime(2026, 11, 14, 12, 37, 33, 72658, tzinfo=zoneinfo.ZoneInfo(key='GMT')), datetime.datetime(2026, 11, 14, 21, 58, 27, 108998, tzinfo=zoneinfo.ZoneInfo(key='GMT')), 1)]
+por dia: [(datetime.date(2026, 11, 14), 18)]
+chaves: ['ipca', 'cambio', 'backtest', 'gerado_em', 'mensagens', 'desempenho']
+ipca keys: ['historico', 'previsoes', 'acumulado_12m', 'especificacao', 'ultimo_conhecido']
+ipca prev[0]: {'h': 1, 'alvo': '2026-11-01', 'li80': -0.2339, 'li95': -0.5586, 'ls80': 0.7657, 'ls95': 1.0924, 'focus': 0.35, 'previsto': 0.2701, 'n_escores_calibracao': 118}
+cambio keys: ['modelo', 'historico', 'previsoes', 'ultimo_conhecido']
+cambio prev[0]: {'h': 1, 'li80': 5.6086, 'li95': 5.5802, 'ls80': 5.6937, 'ls95': 5.7397, 'previsto': 5.6518, 'alvo_aproximado': '2026-11-16'}
+acum: {'h': 1, 'alvo': '2026-11-01', 'li80': 4.2, 'li95': 3.84, 'ls80': 5.24, 'ls95': 5.6, 'focus': 4.81, 'previsto': 4.72}
+alvos ipca por snapshot: [(datetime.date(2026, 11, 14), '2026-11-01,2026-12-01,2027-01-01,2027-02-01,2027-03-01,2027-04-01')]
+ipca ultimos: [(datetime.date(2026, 10, 1), Decimal('0.140000')), (datetime.date(2026, 9, 1), Decimal('0.820000')), (datetime.date(2026, 8, 1), Decimal('-0.320000')), (datetime.date(2026, 7, 1), Decimal('0.070000'))]
+divulgacoes: [(datetime.date(2026, 6, 1), datetime.datetime(2026, 7, 10, 15, 0, tzinfo=zoneinfo.ZoneInfo(key='GMT'))), (datetime.date(2026, 7, 1), datetime.datetime(2026, 8, 11, 15, 0, tzinfo=zoneinfo.ZoneInfo(key='GMT'))), (datetime.date(2026, 8, 1), datetime.datetime(2026, 9, 11, 15, 0, tzinfo=zoneinfo.ZoneInfo(key='GMT'))), (datetime.date(2026, 9, 1), datetime.datetime(2026, 10, 9, 15, 0, tzinfo=zoneinfo.ZoneInfo(key='GMT'))), (datetime.date(2026, 10, 1), datetime.datetime(2026, 11, 12, 15, 0, tzinfo=zoneinfo.ZoneInfo(key='GMT')))]
+series: [('ipca_mensal', 274, datetime.date(2004, 1, 1), datetime.date(2026, 10, 1)), ('ptax_venda', 2727, datetime.date(2016, 1, 4), datetime.date(2026, 11, 13))]
+tabelas: [('backtest_execucoes',), ('backtest_metricas',), ('backtest_previsoes',), ('coleta_execucoes',), ('cotacoes_moedas',), ('divulgacoes',), ('execucoes',), ('focus_ipca_mensal',), ('indicadores',), ('previsoes_publicadas',), ('serie_atual',), ('serie_revisoes',), ('serie_versoes',), ('stg_serie',)]
+backtest exec: [('ipca_mensal', 2, datetime.datetime(2026, 11, 14, 12, 59, 33, 493684, tzinfo=zoneinfo.ZoneInfo(key='GMT'))), ('ptax_venda', 3, datetime.datetime(2026, 11, 14, 17, 39, 5, 199381, tzinfo=zoneinfo.ZoneInfo(key='GMT')))]
