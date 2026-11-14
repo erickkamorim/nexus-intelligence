@@ -1,0 +1,18 @@
+antes 0 {'aside': [10, 380, 586, 646], 'tela': [390, 664], 'ativo': '#visao', 'status_visivel': 'grid'}
+antes 0.2 {'aside': [10, 380, 586, 646], 'tela': [390, 664], 'ativo': '#juros', 'status_visivel': 'grid'}
+antes 0.4 {'aside': [10, 380, 586, 646], 'tela': [390, 664], 'ativo': '#cambio', 'status_visivel': 'grid'}
+antes 0.6 {'aside': [10, 380, 586, 646], 'tela': [390, 664], 'ativo': '#previsoes', 'status_visivel': 'grid'}
+antes 0.8 {'aside': [10, 380, 586, 646], 'tela': [390, 664], 'ativo': '#previsoes', 'status_visivel': 'grid'}
+antes 1.0 {'aside': [10, 380, 586, 646], 'tela': [390, 664], 'ativo': '#dados', 'status_visivel': 'grid'}
+antes clique juros [38, '#juros']
+antes clique cambio [38, '#cambio']
+antes clique dados [38, '#dados']
+depois 0 {'aside': [27, 363, 588, 646], 'tela': [390, 664], 'ativo': '#visao', 'status_visivel': 'none'}
+depois 0.2 {'aside': [27, 363, 588, 646], 'tela': [390, 664], 'ativo': '#juros', 'status_visivel': 'none'}
+depois 0.4 {'aside': [27, 363, 588, 646], 'tela': [390, 664], 'ativo': '#cambio', 'status_visivel': 'none'}
+depois 0.6 {'aside': [27, 363, 588, 646], 'tela': [390, 664], 'ativo': '#previsoes', 'status_visivel': 'none'}
+depois 0.8 {'aside': [27, 363, 588, 646], 'tela': [390, 664], 'ativo': '#previsoes', 'status_visivel': 'none'}
+depois 1.0 {'aside': [27, 363, 588, 646], 'tela': [390, 664], 'ativo': '#dados', 'status_visivel': 'none'}
+depois clique juros [38, '#juros']
+depois clique cambio [38, '#cambio']
+depois clique dados [38, '#dados']
