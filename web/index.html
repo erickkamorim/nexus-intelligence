@@ -18,8 +18,10 @@
     --muted: #8a8a8a;
     --yellow: #ffd60a;
     --yellow-soft: rgba(255, 214, 10, .12);
-    --up: #ff6b5a;
-    --down: #3ddc97;
+    --up: #3ddc97;      /* alta = verde */
+    --down: #ff6b5a;    /* queda = vermelho */
+    --good: #3ddc97;    /* status ok */
+    --bad: #ff6b5a;     /* status com problema */
     --blue: #6b93ff;
     --radius: 24px;
     --wide: "Unbounded", "Arial Black", system-ui, sans-serif;
@@ -54,10 +56,10 @@
   .side-status { margin-top: auto; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 16px; }
   .side-status .t { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; }
   .side-status p { color: var(--muted); font-size: 12px; margin-top: 6px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--down); position: relative; flex-shrink: 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); position: relative; flex-shrink: 0; }
   .dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; background: inherit; opacity: .35;
                 animation: pulso 2s ease-out infinite; }
-  .dot.falha { background: var(--up); }
+  .dot.falha { background: var(--bad); }
   @keyframes pulso { from { transform: scale(.6); opacity: .5; } to { transform: scale(1.8); opacity: 0; } }
 
   /* Barra lateral retrátil */
@@ -135,8 +137,10 @@
   .chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; font-weight: 700;
           font-size: 11.5px; background: var(--card-2); color: var(--muted); white-space: nowrap; }
   .chip svg { width: 13px; height: 13px; stroke-width: 2.4; }
-  .chip.up { color: var(--up); background: rgba(255,107,90,.1); }
-  .chip.down { color: var(--down); background: rgba(61,220,151,.1); }
+  .chip.up { color: var(--up); background: rgba(61,220,151,.1); }
+  .chip.down { color: var(--down); background: rgba(255,107,90,.1); }
+  .chip.good { color: var(--good); background: rgba(61,220,151,.1); }
+  .chip.bad { color: var(--bad); background: rgba(255,107,90,.1); }
 
   /* ---------- Seções ---------- */
   section { padding-top: 38px; }
@@ -207,7 +211,7 @@
   td { padding: 13px 10px; border-top: 1px solid var(--line); transition: background .15s; }
   tbody tr:hover td { background: rgba(255, 255, 255, .025); }
   td:first-child, th:first-child { padding-left: 0; }
-  .ok { color: var(--down); } .bad { color: var(--up); } .muted { color: var(--muted); }
+  .ok { color: var(--good); } .bad { color: var(--bad); } .sobe { color: var(--up); } .desce { color: var(--down); } .muted { color: var(--muted); }
   .bar-cov { height: 6px; background: var(--card-2); border-radius: 6px; overflow: hidden; width: 100px; }
   .bar-cov i { display: block; height: 100%; background: var(--yellow); border-radius: 6px; }
   .runs { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
@@ -555,7 +559,7 @@ const parse = s => { const [a, m, d] = s.slice(0, 10).split("-").map(Number); re
 const dataBR = d => d.toLocaleDateString("pt-BR");
 const mesAno = d => `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
 const NOMES = { selic_meta: "Selic meta", ipca_mensal: "IPCA mensal", dolar_venda: "Dólar (venda)" };
-const COR = { y: "#ffd60a", w: "#f5f5f5", b: "#6b93ff", up: "#ff6b5a", down: "#3ddc97" };
+const COR = { y: "#ffd60a", w: "#f5f5f5", b: "#6b93ff", up: "#3ddc97", down: "#ff6b5a" };
 const DIA = 864e5;
 const reduzMovimento = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let ANIMAR = !reduzMovimento;
@@ -926,7 +930,7 @@ function renderGraficos() {
     $("dolar-stats").innerHTML = `
       <div class="stat"><span>Mínima · ${dataBR(new Date(min[0]))}</span><b>R$ ${fmt(min[1], 4)}</b></div>
       <div class="stat"><span>Máxima · ${dataBR(new Date(max[0]))}</span><b>R$ ${fmt(max[1], 4)}</b></div>
-      <div class="stat"><span>Variação no período</span><b class="${varPer > 0 ? "bad" : "ok"}">${varPer > 0 ? "+" : ""}${fmt(varPer, 1)}%</b></div>
+      <div class="stat"><span>Variação no período</span><b class="${varPer > 0 ? "sobe" : varPer < 0 ? "desce" : ""}">${varPer > 0 ? "+" : ""}${fmt(varPer, 1)}%</b></div>
       <div class="stat"><span>Volatilidade anualizada</span><b>${fmt(vol, 1)}%</b></div>`;
   }
 }
@@ -946,7 +950,7 @@ function renderQualidade() {
     const ok = e.status === "sucesso", w = new Date(e.iniciado_em);
     return `<div class="run"><div><div>${w.toLocaleDateString("pt-BR")} às ${w.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
       <div class="when">${ok ? `${e.registros_inseridos ?? 0} novos · ${e.registros_atualizados ?? 0} atualizados` : (e.mensagem || "Falha na carga")}</div></div>
-      <span class="chip ${ok ? "down" : "up"}">${ok ? "Sucesso" : e.status === "falha" ? "Falha" : "Em andamento"}</span></div>`;
+      <span class="chip ${ok ? "good" : "bad"}">${ok ? "Sucesso" : e.status === "falha" ? "Falha" : "Em andamento"}</span></div>`;
   }).join("") || '<p class="muted">Nenhuma carga registrada.</p>';
 
   const ex = DADOS.resumo.execucao;
@@ -962,7 +966,7 @@ function renderQualidade() {
 let PREV = null;
 
 function chipVeredito(v, rotulos) {
-  const cls = { "melhor que a referência": "down", "pior que a referência": "up" }[v] || "";
+  const cls = { "melhor que a referência": "good", "pior que a referência": "bad" }[v] || "";
   return `<span class="chip ${cls}">${rotulos[v] || v || "—"}</span>`;
 }
 const pctRel = r => {
