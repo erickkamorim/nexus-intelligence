@@ -258,6 +258,34 @@
     .two { grid-template-columns: 1fr; }
     .stats { grid-template-columns: repeat(2, 1fr); }
   }
+  /* Faixa congelada (como "congelar painéis" no Excel): aparece com o período "Tudo"
+     quando a visão geral sai da tela, mantendo PTAX, indicadores e período sempre à vista */
+  .congelado { position: fixed; top: 0; left: var(--side-w); right: 0; z-index: 40;
+               background: rgba(10,10,10,.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+               border-bottom: 1px solid var(--line); box-shadow: 0 14px 34px rgba(0,0,0,.45);
+               padding: 10px max(36px, calc((100vw - var(--side-w) - 1600px) / 2)) 10px;
+               transform: translateY(-110%); opacity: 0; pointer-events: none;
+               transition: transform .3s cubic-bezier(.3,.9,.3,1), opacity .3s, left .28s cubic-bezier(.3,.9,.3,1); }
+  .congelado.on { transform: none; opacity: 1; pointer-events: auto; }
+  .congelado .ticker { margin-bottom: 10px; height: 38px; }
+  .cg-linha { display: flex; align-items: center; gap: 10px; }
+  .cg-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; flex: 1; min-width: 0; }
+  .cg-kpi { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line);
+            border-radius: 14px; padding: 7px 10px; min-width: 0; }
+  .cg-kpi.cg-hero { background: var(--yellow); border-color: var(--yellow); color: #0a0a0a; }
+  .cg-kpi small { font-size: 11.5px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .cg-kpi.cg-hero small { color: rgba(0,0,0,.65); }
+  .cg-kpi b { overflow: hidden; text-overflow: ellipsis; }
+  .congelado .seg button.on { background: var(--yellow); color: #0a0a0a; border-radius: 999px; }
+  .cg-kpi b { font-family: var(--wide); font-size: 15px; font-weight: 700; white-space: nowrap; }
+  .cg-kpi .chip { margin-left: auto; padding: 2px 7px; font-size: 10.5px; }
+  .cg-kpi .chip svg { width: 10px; height: 10px; }
+  .congelado .seg { flex: none; padding: 4px; }
+  .congelado .seg button { padding: 6px 12px; font-size: 12.5px; }
+  @media (max-width: 1500px) { .cg-kpi .chip { display: none; } .cg-kpi b { font-size: 14px; } }
+  @media (max-width: 1180px) { .cg-kpi small { display: none; } }
+  @media (max-width: 860px) { .congelado { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .congelado { transition: none; } }
   /* Faixa de moedas (PTAX de fechamento) */
   .ticker { display: flex; align-items: stretch; margin-bottom: 22px; border: 1px solid var(--line); border-radius: 999px;
             background: rgba(255,255,255,.025); overflow: hidden; height: 44px; }
@@ -356,6 +384,25 @@
     <p id="st-txt">Fonte: Banco Central do Brasil (SGS)</p>
   </div>
 </aside>
+
+<div class="congelado" id="congelado" aria-hidden="true">
+  <div class="ticker" id="cg-ticker">
+    <div class="ticker-rotulo">PTAX <small id="cg-ticker-data"></small></div>
+    <div class="ticker-trilho"><div class="ticker-faixa" id="cg-ticker-faixa"></div></div>
+  </div>
+  <div class="cg-linha">
+    <div class="cg-kpis">
+      <div class="cg-kpi cg-hero"><small>Selic meta</small><b id="cg-selic">—</b></div>
+      <div class="cg-kpi"><small>IPCA 12m</small><b id="cg-ipca">—</b><span class="chip" id="cg-ipca-chip"></span></div>
+      <div class="cg-kpi"><small>Dólar</small><b id="cg-dolar">—</b><span class="chip" id="cg-dolar-chip"></span></div>
+      <div class="cg-kpi"><small>Juro real</small><b id="cg-real">—</b></div>
+      <div class="cg-kpi"><small>Copom</small><b id="cg-ciclo">—</b><span class="chip" id="cg-ciclo-chip"></span></div>
+    </div>
+    <div class="seg" id="cg-periodo" aria-label="Período">
+      <button data-m="6">6M</button><button data-m="12">1A</button><button data-m="24">2A</button><button data-m="0" class="on">Tudo</button>
+    </div>
+  </div>
+</div>
 
 <main>
   <div class="card erro" id="erro">
@@ -1148,10 +1195,50 @@ function moverPill() {
 seg.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || !DADOS) return;
   seg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
-  moverPill(); MESES_FILTRO = Number(b.dataset.m); ANIMAR = !reduzMovimento; renderGraficos();
+  moverPill(); MESES_FILTRO = Number(b.dataset.m);
+  if (typeof atualizarCongelado === "function") atualizarCongelado();
+  ANIMAR = !reduzMovimento; renderGraficos();
 });
 moverPill();
 document.fonts && document.fonts.ready.then(moverPill);
+
+// Faixa congelada: com "Tudo" selecionado, PTAX + indicadores + período ficam fixos no topo
+// depois que a visão geral sai da tela (como "congelar painéis" no Excel).
+const congelado = $("congelado"), visaoGeral = document.querySelector("#visao .overview");
+let visaoForaDaTela = false;
+function copiarParaCongelado() {
+  const txt = id => ($(id) ? $(id).textContent.replace(/\s+/g, " ").trim() : "—");
+  const curto = id => txt(id).replace(/\s*%.*$/, "%");   // "4,63 % em 12m" -> "4,63%"
+  $("cg-selic").textContent = curto("h-valor");
+  $("cg-ipca").textContent = curto("k-ipca");
+  $("cg-dolar").textContent = txt("k-dolar");
+  $("cg-real").textContent = curto("k-real");
+  $("cg-ciclo").textContent = txt("k-ciclo");
+  [["k-ipca-chip", "cg-ipca-chip"], ["k-dolar-chip", "cg-dolar-chip"], ["k-ciclo-chip", "cg-ciclo-chip"]].forEach(([de, para]) => {
+    $(para).className = $(de).className; $(para).innerHTML = $(de).innerHTML;
+  });
+  const faixa = $("ticker-faixa");
+  $("cg-ticker").hidden = $("ticker").hidden;
+  $("cg-ticker-faixa").innerHTML = faixa.innerHTML;
+  $("cg-ticker-faixa").style.cssText = faixa.style.cssText;
+  $("cg-ticker-data").textContent = $("ticker-data").textContent;
+}
+function atualizarCongelado() {
+  const mostrar = !!DADOS && MESES_FILTRO === 0 && visaoForaDaTela;
+  if (mostrar && !congelado.classList.contains("on")) copiarParaCongelado();
+  congelado.classList.toggle("on", mostrar);
+  congelado.setAttribute("aria-hidden", mostrar ? "false" : "true");
+}
+if (visaoGeral) {
+  new IntersectionObserver(([en]) => {
+    visaoForaDaTela = !en.isIntersecting && en.boundingClientRect.top < 0;
+    atualizarCongelado();
+  }).observe(visaoGeral);
+}
+$("cg-periodo").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const alvo = seg.querySelector(`button[data-m="${b.dataset.m}"]`); if (alvo) alvo.click();
+});
 
 let tResize;
 window.addEventListener("resize", () => {
