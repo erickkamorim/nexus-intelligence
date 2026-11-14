@@ -144,6 +144,8 @@
 
   /* ---------- Seções ---------- */
   section { padding-top: 38px; }
+  /* ao clicar no menu, o título da seção para logo abaixo da faixa congelada (38px = padding-top da seção) */
+  section[id]:not(#visao) { scroll-margin-top: max(0px, calc(var(--faixa-h, 0px) - 22px)); }
   .sec-title { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
   .sec-title h2 { font-family: var(--wide); font-size: 21px; font-weight: 700; }
   .sec-title p { color: var(--muted); font-size: 13px; }
@@ -1224,6 +1226,11 @@ function copiarParaCongelado() {
   $("cg-ticker-faixa").innerHTML = faixa.innerHTML;
   $("cg-ticker-faixa").style.cssText = faixa.style.cssText;
   $("cg-ticker-data").textContent = $("ticker-data").textContent;
+  medirFaixa();
+}
+function medirFaixa() {
+  // altura da faixa congelada (0 no celular, onde ela não aparece) usada no scroll-margin das seções
+  document.documentElement.style.setProperty("--faixa-h", congelado.offsetHeight + "px");
 }
 function atualizarCongelado() {
   const mostrar = !!DADOS && visaoForaDaTela;
@@ -1239,7 +1246,10 @@ function checarCongelado() {
   atualizarCongelado();
 }
 window.addEventListener("scroll", checarCongelado, { passive: true });
-window.addEventListener("resize", checarCongelado);
+window.addEventListener("resize", () => { medirFaixa(); checarCongelado(); });
+// antes de pular para uma seção pelo menu, atualiza a faixa e mede a altura dela
+document.querySelectorAll('#menu a[href^="#"], .nav-mobile a[href^="#"]').forEach(a =>
+  a.addEventListener("click", () => { if (DADOS) copiarParaCongelado(); }));
 $("cg-periodo").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   const alvo = seg.querySelector(`button[data-m="${b.dataset.m}"]`); if (alvo) alvo.click();
