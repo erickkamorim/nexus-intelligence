@@ -837,7 +837,11 @@ function chipVeredito(v, rotulos) {
   const cls = { "melhor que a referência": "down", "pior que a referência": "up" }[v] || "";
   return `<span class="chip ${cls}">${rotulos[v] || v || "—"}</span>`;
 }
-const pctRel = r => r == null ? "—" : `${r > 1 ? "+" : ""}${fmt((r - 1) * 100, 0)}%`;
+const pctRel = r => {
+  if (r == null) return "—";
+  const v = (r - 1) * 100;                   // casas decimais quando o arredondamento esconderia o sinal
+  return `${v > 0 ? "+" : ""}${fmt(v, Math.abs(v) < 1 ? 1 : 0)}%`;
+};
 const pct0 = v => v == null ? "—" : fmt(v * 100, 0) + "%";
 
 function renderPrevisoes() {
