@@ -283,7 +283,7 @@ O dashboard foi desenvolvido do zero em HTML, CSS e JavaScript, com gráficos em
 
 ### 🏠 Visão Geral
 
-Um cartão de destaque mostra a Selic atual e um **resumo da conjuntura escrito automaticamente** a partir dos dados: última decisão do Copom, ciclo atual, inflação, juro real e variação do dólar.
+Cinco cartões com os indicadores do momento (Selic, IPCA 12 meses, dólar, juro real e ciclo do Copom) e, logo abaixo, um **resumo da conjuntura escrito automaticamente** a partir dos dados: última decisão do Copom, ciclo atual, inflação, juro real e variação do dólar.
 
 <p align="center">
 <img src="docs/visao-geral.png" width="90%">
@@ -311,6 +311,14 @@ Cotação diária do dólar com média móvel de 21 dias úteis, mínima, máxim
 
 <p align="center">
 <img src="docs/cambio.png" width="90%">
+</p>
+
+### 🔮 Previsões
+
+Previsão do IPCA para os próximos 6 meses e do dólar para 21 dias úteis, com faixas de 80% e 95%, a expectativa do Boletim Focus no mesmo gráfico e um aviso em texto simples dizendo onde o modelo ganha, empata ou perde para as referências. Detalhes na seção 8.
+
+<p align="center">
+<img src="docs/previsoes.png" width="90%">
 </p>
 
 ### ✅ Qualidade dos Dados
@@ -351,6 +359,10 @@ Garantias da automação:
 ## 🔮 8. NEXUS Forecast: previsões com validação honesta
 
 Previsão do **IPCA** (1 a 6 meses e acumulado em 12 meses) e do **dólar** (1 a 21 dias úteis). A regra do projeto: **todo modelo precisa provar, em dados que não viu, que é melhor do que uma referência simples**. Se não for, o painel diz isso. A explicação completa está na [página de Metodologia](https://erickkamorim.github.io/nexus-intelligence/metodologia.html).
+
+<p align="center">
+<img src="docs/metodologia.png" width="85%">
+</p>
 
 **Dados como eram conhecidos em cada data**
 
