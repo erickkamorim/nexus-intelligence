@@ -62,3 +62,55 @@ previstos; os intervalos do acumulado vêm desses caminhos. Para os modelos sem 
   a composição do acumulado (inclusive por caminhos) e a cobertura próxima do nominal quando
   o modelo é o correto.
 - O ajuste real com statsmodels é validado rodando `python src/rodar_backtest.py`.
+
+## Resultados (backtest de 14/11/2026)
+
+**IPCA, comparação com o Boletim Focus (RMSE relativo; > 1 = erro maior que o Focus):**
+
+| h | SARIMA | Média sazonal 5 anos |
+|---|---|---|
+| 1 | 1,318 (pior, significativo) | 1,570 (pior) |
+| 2 | 1,047 (sem diferença significativa) | 1,162 (pior) |
+| 3 | 1,042 (sem diferença) | 1,113 (pior) |
+| 4 | 1,033 (sem diferença) | 1,086 (sem diferença) |
+| 5 | 1,021 (sem diferença) | 1,069 (sem diferença) |
+| 6 | 0,995 (sem diferença) | 1,048 (sem diferença) |
+
+A partir de 2 meses à frente, o SARIMA, que usa apenas o histórico do IPCA, não se distingue
+estatisticamente do Boletim Focus. Não se afirma que o modelo supera o mercado: em h = 6 o erro
+é 0,5% menor, sem significância.
+
+**Ordens escolhidas** (10 seleções, nenhuma falha): SARIMA(1,0,0)(0,0,1)₁₂ de 2017 a 2019,
+SARIMA(1,0,2)(1,0,1)₁₂ em 2020 e SARIMA(1,0,0)(1,0,1)₁₂ de 2021 a 2026. Estrutura estável:
+persistência de curto prazo (AR 1) e padrão sazonal anual. Os valores de AIC não são comparáveis
+entre anos, porque cada seleção usa uma amostra maior.
+
+**Câmbio:** o ARIMA no log também não supera o passeio aleatório (RMSE relativo de 0,995 a
+1,021, sem diferença significativa em nenhum horizonte).
+
+**Cobertura dos intervalos (problema encontrado):**
+
+| Modelo | Cobertura do intervalo de 80% | Cobertura do intervalo de 95% |
+|---|---|---|
+| SARIMA (IPCA) | — | 82% a 86% (estreito demais) |
+| ARIMA (câmbio) | 89% a 91% (largo demais) | 97% a 98% (largo demais) |
+
+No IPCA, o resultado confirma a limitação prevista (a simulação ignora a incerteza dos
+parâmetros e as mudanças de regime). No câmbio aconteceu o contrário: o modelo estima uma
+volatilidade constante com todo o histórico desde 2016, incluindo a turbulência de 2020, maior
+que a volatilidade recente.
+
+## Calibração conformal dos intervalos
+
+Para que uma faixa chamada "95%" cubra de fato cerca de 95%, os intervalos são calibrados com
+os erros do próprio backtest (`src/forecast/calibracao.py`, método CQR de Romano et al., 2019):
+
+- escore de cada previsão passada: s = max(li − y, y − ls);
+- na origem t, entram só as previsões cujo valor real **já estava publicado em t**;
+- a faixa é deslocada pelo quantil conformal dos escores (alarga se o modelo errava para fora,
+  estreita se sobrava folga);
+- com menos de 24 escores disponíveis, não há intervalo calibrado naquela origem.
+
+O resultado aparece como modelos `sarima_calibrado` e `arima_log_calibrado`, com a cobertura
+medida fora da amostra. Os testes (`tests/test_calibracao.py`) verificam que a calibração corrige
+intervalos estreitos e largos e que alterar valores ainda não publicados não muda o intervalo.

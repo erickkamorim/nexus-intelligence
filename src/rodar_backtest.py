@@ -14,8 +14,9 @@ Mesmas origens e horizontes da Fase 2:
     horizontes de 1 a 6 meses; também avalia o acumulado em 12 meses;
   * Câmbio: 250 origens a cada 5 dias úteis, horizontes 1, 5, 10 e 21.
 Comparações: referência obrigatória (Diebold-Mariano com correção para
-sobreposição) e, no IPCA, também o Boletim Focus. A cobertura dos intervalos
-de 80% e 95% aparece em todas as tabelas.
+sobreposição), no IPCA também o Boletim Focus e a média sazonal. A cobertura
+dos intervalos de 80% e 95% aparece em todas as tabelas, inclusive a dos
+intervalos calibrados (modelos com sufixo _calibrado).
 """
 
 import argparse
@@ -33,6 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from coleta.armazenamento import preparar_esquema  # noqa: E402
 from forecast.backtest import ConfigSerie, executar, origens_semanais  # noqa: E402
+from forecast.calibracao import calibrar  # noqa: E402
 from forecast.fontes import FonteBanco  # noqa: E402
 from forecast.metricas import resumo  # noqa: E402
 from forecast.modelos import MODELOS_CAMBIO, MODELOS_IPCA  # noqa: E402
@@ -137,10 +139,13 @@ def rodar_ipca(conn, fonte, args, pasta):
                     ao_avancar=Progresso("IPCA"))
     sarima.backend.encerrar()
     print(f"IPCA concluído em {time.time() - inicio:.0f}s")
+    # intervalos calibrados com erros passados já publicados em cada origem
+    prev = pd.concat([prev, calibrar(prev, "sarima")], ignore_index=True)
 
     metricas = {}
     for medida, rotulo in (("variacao", "variação mensal"), ("acumulado_12m", "acumulado em 12 meses")):
-        for ref, nome_ref in (("ingenuo", "modelo ingênuo"), ("focus_mediana", "Boletim Focus")):
+        for ref, nome_ref in (("ingenuo", "modelo ingênuo"), ("focus_mediana", "Boletim Focus"),
+                              ("media_sazonal_5a", "melhor modelo simples (média sazonal)")):
             m = resumo(prev, ref, passo=1, medida=medida)
             metricas[(medida, ref)] = m
             m.to_csv(pasta / f"ipca_{medida}_vs_{ref}.csv", index=False)
@@ -168,6 +173,7 @@ def rodar_cambio(conn, fonte, args, pasta):
     prev = executar(fonte, CAMBIO, modelos, origens, ao_avancar=Progresso("Câmbio"))
     arima.backend.encerrar()
     print(f"Câmbio concluído em {time.time() - inicio:.0f}s")
+    prev = pd.concat([prev, calibrar(prev, "arima_log")], ignore_index=True)
     m = resumo(prev, "passeio_aleatorio", passo=PASSO_CAMBIO)
     m.to_csv(pasta / "cambio_metricas.csv", index=False)
     mostrar("Câmbio · comparação com o passeio aleatório (referência obrigatória)", m)
