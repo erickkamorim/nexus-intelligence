@@ -11,6 +11,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Acordar a API (Render dorme sem uso)
+        run: for i in $(seq 1 20); do curl -sf -m 30 https://bb-intelligence-api.onrender.com/api/v1/health && break; sleep 10; done
+      - name: Subir o site da branch
+        env:
+          BB_API_URL: https://bb-intelligence-api.onrender.com
+        run: |
+          git clone -q --depth 1 -b identidade-azul-amarelo https://github.com/erickkamorim/bb-intelligence /tmp/bb
+          cd /tmp/bb/frontend && npm install --no-audit --no-fund >/dev/null && npm run build >/tmp/build.log 2>&1 || (tail -40 /tmp/build.log; exit 1)
+          nohup npm start -- -p 3000 > /tmp/web.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null 127.0.0.1:3000 && break; sleep 1; done
       - run: pip install playwright && python -m playwright install --with-deps chromium
       - run: mkdir -p capturas/out && python capturas/capturar.py | tee capturas/out/resultado.txt
       - run: |
