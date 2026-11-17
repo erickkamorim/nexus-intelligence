@@ -1,7 +1,0 @@
-d 200 BB Intelligence
-d-recolhido 200 BB Intelligence
-m 200 BB Intelligence
-m-menu 200 BB Intelligence
-pares 200 Comparar Bancos · BB Intelligence
-credito 200 Crédito e Risco · BB Intelligence
-resultados 200 Resultados Financeiros · BB Intelligence
